@@ -21,7 +21,7 @@ export default function OnboardingView() {
         invokeTrigger();
 
         if (isLast) {
-            completeOnboarding();
+            await completeOnboarding();
             router.replace("/sign-up/create-account");
             return;
         }
