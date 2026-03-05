@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useColorScheme, View } from "react-native";
 import {
     DarkTheme,
@@ -6,7 +5,6 @@ import {
     ThemeProvider,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { PortalHost } from "@rn-primitives/portal";
 import { ConvexReactClient, useConvexAuth } from "convex/react";
@@ -18,8 +16,6 @@ import "react-native-reanimated";
 import { authClient } from "@/lib/auth-client";
 import { useOnboarding } from "@/modules/auth/hooks/use-onboarding";
 import "./globals.css";
-
-SplashScreen.preventAutoHideAsync();
 
 const convex = new ConvexReactClient(
     process.env.EXPO_PUBLIC_CONVEX_URL as string,
@@ -35,28 +31,42 @@ function AuthGate() {
     const { isAuthenticated, isLoading } = useConvexAuth();
     const { isFirstTime } = useOnboarding();
 
-    useEffect(() => {
-        if (!isLoading) {
-            SplashScreen.hideAsync();
-        }
-    }, [isLoading]);
-
+    // TODO: Do later
     if (isLoading) {
-        return null;
+        return (
+            <View
+                style={{ flex: 1, backgroundColor: isDark ? "#000" : "#fff" }}
+            />
+        );
     }
+
+    const showOnboarding = isFirstTime;
+    const showAuth = !isFirstTime && !isAuthenticated;
+    const showHome = !isFirstTime && isAuthenticated;
 
     return (
         <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-            <View className={`flex-1 bg-background ${isDark ? "dark" : ""}`}>
+            <View
+                style={{ flex: 1, backgroundColor: isDark ? "#000" : "#fff" }}
+            >
                 <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="onboarding" redirect={!isFirstTime} />
                     <Stack.Screen
-                        name="(auth)"
-                        redirect={isAuthenticated || isFirstTime}
+                        name="index"
+                        redirect={showOnboarding || showAuth || showHome}
                     />
-                    <Stack.Screen name="(home)" redirect={!isAuthenticated} />
+                    <Stack.Screen
+                        name="onboarding"
+                        redirect={!showOnboarding}
+                    />
+                    <Stack.Screen name="(auth)" redirect={!showAuth} />
+                    <Stack.Screen name="(home)" redirect={!showHome} />
                 </Stack>
-                <StatusBar style={isDark ? "light" : "dark"} />
+                <StatusBar
+                    style={isDark ? "light" : "dark"}
+                    hidden={true}
+                    translucent
+                    backgroundColor="transparent"
+                />
                 <PortalHost />
             </View>
         </ThemeProvider>

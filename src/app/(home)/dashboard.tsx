@@ -1,9 +1,9 @@
-import { Text, View } from "react-native";
+import { View, Text } from "react-native";
 
 const Page = () => {
     return (
         <View>
-            <Text>Hello</Text>
+            <Text>Dashboard</Text>
         </View>
     );
 };

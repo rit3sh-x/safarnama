@@ -16,9 +16,9 @@ config.resolver.assetExts.push('riv');
 
 config.resolver.extraNodeModules = {
     ...config.resolver.extraNodeModules,
-    "@backend/api": path.resolve(projectRoot, "_generated/api"),
-    "@backend/dataModel": path.resolve(projectRoot, "_generated/dataModel"),
-    "@backend/types": path.resolve(projectRoot, "types"),
+    "@backend/api": path.resolve(projectRoot, "convex/_generated/api"),
+    "@backend/dataModel": path.resolve(projectRoot, "convex/_generated/dataModel"),
+    "@backend/types": path.resolve(projectRoot, "convex/types"),
     "@": path.resolve(projectRoot, "src"),
 };
 

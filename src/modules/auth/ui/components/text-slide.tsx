@@ -56,11 +56,14 @@ export const TextSlide: React.FC<TextSlideProps> = ({ screen, index }) => {
         <Animated.View style={animStyle} className="gap-3">
             <Text
                 className="text-4xl font-extrabold leading-tight tracking-tight"
-                style={{ color: screen.accentColor }}
+                style={{ color: screen.headlineColor }}
             >
                 {screen.headline}
             </Text>
-            <Text className="text-base text-white/70 leading-relaxed max-w-xs font-normal">
+            <Text
+                className="text-base text-white/70 leading-relaxed max-w-xs font-normal"
+                style={{ color: screen.subtextColor }}
+            >
                 {screen.subtext}
             </Text>
         </Animated.View>
