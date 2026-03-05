@@ -1,0 +1,37 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "strict": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@backend/api": [
+        "./convex/_generated/api"
+      ],
+      "@backend/dataModel": [
+        "./convex/_generated/dataModel"
+      ],
+      "@backend/types": [
+        "./convex/types"
+      ],
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "modules/**/*.ts",
+    "modules/**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "uniwind-types.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
