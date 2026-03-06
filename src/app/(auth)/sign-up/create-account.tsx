@@ -1,11 +1,7 @@
-import { Text, View } from "react-native";
+import { SignUpView } from "@/modules/auth/ui/views/signup-view";
 
 const Page = () => {
-    return (
-        <View>
-            <Text>Hello</Text>
-        </View>
-    );
+    return <SignUpView/>;
 };
 
 export default Page;

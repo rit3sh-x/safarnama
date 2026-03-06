@@ -11,7 +11,6 @@ import authConfig from "../auth.config";
 import { ROLE_MAP, ROLES } from "./roles";
 import schema from "./schema";
 
-const siteUrl = process.env.SITE_URL!;
 const mobileScheme = process.env.MOBILE_SCHEME!;
 const isProd = process.env.NODE_ENV === "production";
 
@@ -27,7 +26,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     return {
         appName: "Safarnama",
         trustedOrigins: async (request) => {
-            const base = [siteUrl, mobileScheme];
+            const base = [mobileScheme];
             const origin = request?.headers?.get("expo-origin") ?? "";
             if (isProd && origin.startsWith("exp://")) {
                 return [...base, origin];

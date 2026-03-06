@@ -1,31 +1,33 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { View, Pressable } from "react-native";
-import { router } from "expo-router";
-
 import { useAnimation } from "../components/animation";
 import { useOnboarding } from "../../hooks/use-onboarding";
 import { ONBOARDING_SCREENS } from "../../constants";
 import { TextSlide } from "../components/text-slide";
 import { ProgressDots } from "../components/progress-dots";
 
-export default function OnboardingView() {
+export function OnboardingView() {
     const [index, setIndex] = useState(0);
     const { completeOnboarding } = useOnboarding();
     const { Animation, invokeTrigger } = useAnimation();
+    const transitioning = useRef(false);
 
     const screen = ONBOARDING_SCREENS[index];
     const isLast = index === ONBOARDING_SCREENS.length - 1;
 
     const handleNext = useCallback(async () => {
+        if (transitioning.current) return;
+        transitioning.current = true;
+
         invokeTrigger();
 
         if (isLast) {
             await completeOnboarding();
-            router.replace("/sign-up/create-account");
             return;
         }
 
         setIndex((prev) => prev + 1);
+        transitioning.current = false;
     }, [isLast, invokeTrigger, completeOnboarding]);
 
     return (

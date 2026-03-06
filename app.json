@@ -1,10 +1,10 @@
 {
     "expo": {
-        "name": "safarnama",
+        "name": "Safarnama",
         "slug": "safarnama",
         "version": "1.0.0",
         "orientation": "portrait",
-        "icon": "./src/assets/app/icon.png",
+        "icon": "src/assets/app/icon.png",
         "scheme": "safarnama",
         "userInterfaceStyle": "automatic",
         "newArchEnabled": true,
@@ -19,9 +19,9 @@
             "package": "com.safarnama",
             "adaptiveIcon": {
                 "backgroundColor": "#E6F4FE",
-                "foregroundImage": "./src/assets/app/android-icon-foreground.png",
-                "backgroundImage": "./src/assets/app/android-icon-background.png",
-                "monochromeImage": "./src/assets/app/android-icon-monochrome.png"
+                "foregroundImage": "src/assets/app/android-icon-foreground.png",
+                "backgroundImage": "src/assets/app/android-icon-background.png",
+                "monochromeImage": "src/assets/app/android-icon-monochrome.png"
             },
             "edgeToEdgeEnabled": true,
             "predictiveBackGestureEnabled": false,
@@ -35,19 +35,13 @@
             [
                 "expo-splash-screen",
                 {
-                    "image": "./src/assets/app/splash-icon.png",
+                    "image": "src/assets/app/splash-icon.png",
                     "imageWidth": 200,
                     "resizeMode": "contain",
                     "backgroundColor": "#ffffff",
                     "dark": {
                         "backgroundColor": "#000000"
                     }
-                }
-            ],
-            [
-                "expo-local-authentication",
-                {
-                    "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
                 }
             ],
             "expo-secure-store"

@@ -7,14 +7,16 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { PortalHost } from "@rn-primitives/portal";
-import { ConvexReactClient, useConvexAuth } from "convex/react";
+import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { AuthClient } from "@convex-dev/better-auth/react";
 import "react-native-reanimated";
 
 import { authClient } from "@/lib/auth-client";
-import { useOnboarding } from "@/modules/auth/hooks/use-onboarding";
+import { NetworkModal } from "@/components/network-modal";
+import { useAuthentication, AuthenticationProvider } from "@/modules/auth/context/auth-context";
+import { OnboardingProvider } from "@/modules/onboarding/context/onboarding-context";
 import "./globals.css";
 
 const convex = new ConvexReactClient(
@@ -28,41 +30,46 @@ const convex = new ConvexReactClient(
 function AuthGate() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === "dark";
-    const { isAuthenticated, isLoading } = useConvexAuth();
-    const { isFirstTime } = useOnboarding();
+    const {
+        isLoading,
+        showOnboarding,
+        showAuth,
+        showUsername,
+        showHome,
+    } = useAuthentication();
 
     // TODO: Do later
     if (isLoading) {
         return (
-            <View
-                style={{ flex: 1, backgroundColor: isDark ? "#000" : "#fff" }}
-            />
+            <View className="flex-1 bg-background">
+                <NetworkModal />
+            </View>
         );
     }
 
-    const showOnboarding = isFirstTime;
-    const showAuth = !isFirstTime && !isAuthenticated;
-    const showHome = !isFirstTime && isAuthenticated;
-
     return (
         <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-            <View
-                style={{ flex: 1, backgroundColor: isDark ? "#000" : "#fff" }}
-            >
+            <View className="flex-1 bg-background">
                 <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen
                         name="index"
-                        redirect={showOnboarding || showAuth || showHome}
+                        redirect
                     />
                     <Stack.Screen
                         name="onboarding"
                         redirect={!showOnboarding}
                     />
-                    <Stack.Screen name="(auth)" redirect={!showAuth} />
-                    <Stack.Screen name="(home)" redirect={!showHome} />
+                    <Stack.Screen
+                        name="(auth)"
+                        redirect={!showAuth && !showUsername}
+                    />
+                    <Stack.Screen
+                        name="(home)"
+                        redirect={!showHome}
+                    />
                 </Stack>
+                <NetworkModal />
                 <StatusBar
-                    style={isDark ? "light" : "dark"}
                     hidden={true}
                     translucent
                     backgroundColor="transparent"
@@ -76,12 +83,16 @@ function AuthGate() {
 export default function RootLayout() {
     return (
         <SafeAreaProvider>
-            <ConvexBetterAuthProvider
-                client={convex}
-                authClient={authClient as unknown as AuthClient}
-            >
-                <AuthGate />
-            </ConvexBetterAuthProvider>
+            <OnboardingProvider>
+                <ConvexBetterAuthProvider
+                    client={convex}
+                    authClient={authClient as unknown as AuthClient}
+                >
+                    <AuthenticationProvider>
+                        <AuthGate />
+                    </AuthenticationProvider>
+                </ConvexBetterAuthProvider>
+            </OnboardingProvider>
         </SafeAreaProvider>
     );
 }

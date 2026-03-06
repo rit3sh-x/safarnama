@@ -1,4 +1,4 @@
-import OnboardingView from "@/modules/auth/ui/views/onboarding-view"
+import { OnboardingView } from "@/modules/onboarding/ui/views/onboarding-view";
 
 const Page = () => {
   return <OnboardingView />;

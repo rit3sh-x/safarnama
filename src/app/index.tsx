@@ -1,21 +1,15 @@
 import { Redirect } from "expo-router";
-import { useConvexAuth } from "convex/react";
-
-import { useOnboarding } from "@/modules/auth/hooks/use-onboarding";
+import { useAuthentication } from "@/modules/auth/context/auth-context";
 
 const Page = () => {
-    const { isAuthenticated } = useConvexAuth();
-    const { isFirstTime } = useOnboarding();
+    const { showOnboarding, showAuth, showUsername, showHome } = useAuthentication();
 
-    if (isFirstTime) {
-        return <Redirect href="/onboarding" />;
-    }
+    if (showOnboarding) return <Redirect href="/onboarding" />;
+    if (showAuth) return <Redirect href="/(auth)/signin" />;
+    if (showUsername) return <Redirect href="/(auth)/sign-up/create-username" />;
+    if (showHome) return <Redirect href="/(home)/dashboard" />;
 
-    if (!isAuthenticated) {
-        return <Redirect href="/(auth)/signin" />;
-    }
-
-    return <Redirect href="/(home)/dashboard" />;
+    return null;
 };
 
 export default Page;
