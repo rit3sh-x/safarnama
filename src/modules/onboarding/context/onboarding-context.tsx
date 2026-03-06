@@ -1,5 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import { USER_ONBOARDING_KEY } from "../constants";
 
@@ -49,6 +55,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
 export const useOnboarding = () => {
     const ctx = useContext(OnboardingContext);
-    if (!ctx) throw new Error("useOnboarding must be used within OnboardingProvider");
+    if (!ctx)
+        throw new Error("useOnboarding must be used within OnboardingProvider");
     return ctx;
 };

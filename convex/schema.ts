@@ -30,7 +30,7 @@ export default defineSchema({
         .index("orgId", ["orgId"])
         .index("isPublic", ["isPublic"])
         .index("createdBy", ["createdBy"]),
-    
+
     blogComment: defineTable({
         tripId: v.id("trip"),
         authorId: v.string(),
@@ -42,7 +42,7 @@ export default defineSchema({
         .index("tripId", ["tripId"])
         .index("parentId", ["parentId"]),
 
-  joinRequest: defineTable({
+    joinRequest: defineTable({
         tripId: v.id("trip"),
         orgId: v.string(),
         userId: v.string(),

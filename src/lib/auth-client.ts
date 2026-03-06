@@ -1,8 +1,5 @@
 import { createAuthClient } from "better-auth/react";
-import {
-    usernameClient,
-    organizationClient,
-} from "better-auth/client/plugins";
+import { usernameClient, organizationClient } from "better-auth/client/plugins";
 import { convexClient } from "@convex-dev/better-auth/client/plugins";
 import { expoClient } from "@better-auth/expo/client";
 import Constants from "expo-constants";

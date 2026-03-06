@@ -12,6 +12,7 @@ import {
     PrimaryButton,
     SocialButton,
 } from "./elements";
+import GoogleSvg from "@/assets/auth/google.svg";
 
 const schema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -23,10 +24,9 @@ type FormData = z.infer<typeof schema>;
 
 interface SignUpScreenProps {
     onNavigateLogin: () => void;
-    onSuccess: () => void;
 }
 
-export function SignUpScreen({ onNavigateLogin, onSuccess }: SignUpScreenProps) {
+export function SignUpScreen({ onNavigateLogin }: SignUpScreenProps) {
     const {
         control,
         handleSubmit,
@@ -39,7 +39,6 @@ export function SignUpScreen({ onNavigateLogin, onSuccess }: SignUpScreenProps) 
             email,
             password,
             fetchOptions: {
-                onSuccess,
                 onError: ({ error }) => console.error(error),
             },
         })
@@ -52,14 +51,14 @@ export function SignUpScreen({ onNavigateLogin, onSuccess }: SignUpScreenProps) 
                     control={control}
                     name="name"
                     label="Name"
-                    placeholder="Your name"
+                    placeholder="John Doe"
                     error={errors.name}
                 />
                 <FormField
                     control={control}
                     name="email"
                     label="Email"
-                    placeholder="youremail@yahoo.com"
+                    placeholder="johndoe@gmail.com"
                     keyboardType="email-address"
                     error={errors.email}
                 />
@@ -73,13 +72,21 @@ export function SignUpScreen({ onNavigateLogin, onSuccess }: SignUpScreenProps) 
                     error={errors.password}
                 />
 
-                <PrimaryButton label="Sign Up" onPress={onSubmit} loading={isSubmitting} />
+                <PrimaryButton
+                    label="Sign Up"
+                    onPress={onSubmit}
+                    loading={isSubmitting}
+                />
 
                 <Divider />
 
-                <View className="flex-row justify-center gap-3">
-                    <SocialButton onPress={signInWithGoogle} icon="G" />
-                    <SocialButton onPress={() => { }} icon="𝕏" />
+                <View className="w-full">
+                    <SocialButton
+                        onPress={signInWithGoogle}
+                        text="Continue with Google"
+                    >
+                        <GoogleSvg width="100%" height="100%" />
+                    </SocialButton>
                 </View>
 
                 <FooterLink

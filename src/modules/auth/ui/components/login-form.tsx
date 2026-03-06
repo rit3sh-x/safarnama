@@ -12,6 +12,7 @@ import {
     PrimaryButton,
     SocialButton,
 } from "./elements";
+import GoogleSvg from "@/assets/auth/google.svg";
 
 const schema = z.object({
     email: z.email("Enter a valid email"),
@@ -24,7 +25,7 @@ interface LoginScreenProps {
     onNavigateSignUp: () => void;
 }
 
-export function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
+export function LoginForm({ onNavigateSignUp }: LoginScreenProps) {
     const {
         control,
         handleSubmit,
@@ -36,7 +37,6 @@ export function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
             email,
             password,
             fetchOptions: {
-                onSuccess: () => console.log("Signed in!"),
                 onError: ({ error }) => console.error(error),
             },
         })
@@ -49,7 +49,7 @@ export function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
                     control={control}
                     name="email"
                     label="Email"
-                    placeholder="youremail@yahoo.com"
+                    placeholder="johndoe@gmail.com"
                     keyboardType="email-address"
                     error={errors.email}
                 />
@@ -63,13 +63,21 @@ export function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
                     error={errors.password}
                 />
 
-                <PrimaryButton label="Sign In" onPress={onSubmit} loading={isSubmitting} />
+                <PrimaryButton
+                    label="Sign In"
+                    onPress={onSubmit}
+                    loading={isSubmitting}
+                />
 
                 <Divider />
 
-                <View className="flex-row justify-center gap-3">
-                    <SocialButton onPress={signInWithGoogle} icon="G" />
-                    <SocialButton onPress={() => { }} icon="𝕏" />
+                <View className="w-full">
+                    <SocialButton
+                        onPress={signInWithGoogle}
+                        text="Continue with Google"
+                    >
+                        <GoogleSvg width="100%" height="100%" />
+                    </SocialButton>
                 </View>
 
                 <FooterLink

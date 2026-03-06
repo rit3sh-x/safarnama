@@ -1,44 +1,40 @@
 import { NativeOnlyAnimatedView } from "@/components/ui/native-only-animated-view";
 import { useEffect } from "react";
-import { Image, View } from "react-native";
-import { useSharedValue, withSpring } from "react-native-reanimated";
+import { View } from "react-native";
+import {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    Easing,
+} from "react-native-reanimated";
 import { UsernameScreen } from "../components/username-form";
-import { useRouter } from "expo-router";
+import TravellerSvg from "@/assets/auth/traveller.svg";
 
 export function UsernameView() {
     const translateY = useSharedValue(1000);
-    const router = useRouter();
-
-    const onSuccess = () => {
-        router.replace("/(home)/dashboard")
-    }
 
     useEffect(() => {
-        translateY.value = withSpring(0, {
-            damping: 20,
-            stiffness: 90,
+        translateY.value = withTiming(0, {
+            duration: 500,
+            easing: Easing.out(Easing.exp),
         });
     }, [translateY]);
 
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: translateY.value }],
+    }));
+
     return (
-        <View className="flex-1 bg-background">
-            <View className="absolute inset-0 justify-center items-center pt-16">
-                <Image
-                    source={require("@/assets/auth/plane.svg")}
-                    className="w-4/5 h-1/2 opacity-90"
-                    resizeMode="contain"
-                />
+        <View className="flex-1 bg-blue-600">
+            <View className="absolute inset-0 z-0 h-1/2 w-full p-8 pointer-events-none">
+                <TravellerSvg width="100%" height="100%" />
             </View>
 
             <NativeOnlyAnimatedView
-                className="absolute bottom-0 left-0 right-0 bg-background rounded-t-4xl shadow-lg shadow-black/10"
-                style={[
-                    {
-                        transform: [{ translateY }],
-                    },
-                ]}
+                className="absolute bottom-0 left-0 right-0 bg-background rounded-t-4xl overflow-hidden shadow-lg shadow-black/10"
+                style={animatedStyle}
             >
-                <UsernameScreen onSuccess={onSuccess} />
+                <UsernameScreen />
             </NativeOnlyAnimatedView>
         </View>
     );

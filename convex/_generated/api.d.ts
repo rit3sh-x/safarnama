@@ -15,11 +15,13 @@ import type * as lib_notifications from "../lib/notifications.js";
 import type * as lib_utils from "../lib/utils.js";
 import type * as methods_blogs from "../methods/blogs.js";
 import type * as methods_expenses from "../methods/expenses.js";
+import type * as methods_file from "../methods/file.js";
 import type * as methods_members from "../methods/members.js";
 import type * as methods_messages from "../methods/messages.js";
 import type * as methods_notifications from "../methods/notifications.js";
 import type * as methods_requests from "../methods/requests.js";
 import type * as methods_trips from "../methods/trips.js";
+import type * as methods_users from "../methods/users.js";
 import type * as system_notifications from "../system/notifications.js";
 import type * as types from "../types.js";
 
@@ -37,11 +39,13 @@ declare const fullApi: ApiFromModules<{
   "lib/utils": typeof lib_utils;
   "methods/blogs": typeof methods_blogs;
   "methods/expenses": typeof methods_expenses;
+  "methods/file": typeof methods_file;
   "methods/members": typeof methods_members;
   "methods/messages": typeof methods_messages;
   "methods/notifications": typeof methods_notifications;
   "methods/requests": typeof methods_requests;
   "methods/trips": typeof methods_trips;
+  "methods/users": typeof methods_users;
   "system/notifications": typeof system_notifications;
   types: typeof types;
 }>;

@@ -33,9 +33,8 @@ export function NetworkModal() {
                             No Internet Connection
                         </Text>
                         <Text className="text-muted-foreground text-sm leading-relaxed">
-                            Please check your internet connection and try
-                            again. Some features may not be available while
-                            offline.
+                            Please check your internet connection and try again.
+                            Some features may not be available while offline.
                         </Text>
                     </View>
                 </DialogContent>

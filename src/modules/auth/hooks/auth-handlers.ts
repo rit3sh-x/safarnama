@@ -75,15 +75,17 @@ export const signUpWithEmail = ({
 export async function signInWithGoogle() {
     return authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: "/(auth)/sign-up/create-username",
     });
 }
 
 export async function changeUsername({
     username,
+    imageUrl,
     fetchOptions,
 }: {
     username: string;
+    imageUrl?: string;
     fetchOptions?: {
         onSuccess?: () => void;
         onError?: ({ error }: { error: unknown }) => void;
@@ -92,6 +94,7 @@ export async function changeUsername({
     return authClient.updateUser(
         {
             username,
+            image: imageUrl,
         },
         {
             ...fetchOptions,

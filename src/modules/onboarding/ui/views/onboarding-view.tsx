@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { View, Pressable } from "react-native";
 import { useAnimation } from "../components/animation";
-import { useOnboarding } from "../../hooks/use-onboarding";
+import { useOnboarding } from "../../context/onboarding-context";
 import { ONBOARDING_SCREENS } from "../../constants";
 import { TextSlide } from "../components/text-slide";
 import { ProgressDots } from "../components/progress-dots";
@@ -19,12 +19,12 @@ export function OnboardingView() {
         if (transitioning.current) return;
         transitioning.current = true;
 
-        invokeTrigger();
-
         if (isLast) {
             await completeOnboarding();
             return;
         }
+
+        invokeTrigger();
 
         setIndex((prev) => prev + 1);
         transitioning.current = false;

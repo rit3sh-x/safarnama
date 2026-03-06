@@ -12,7 +12,11 @@ config.resolver.nodeModulesPaths = [
     path.resolve(projectRoot, "node_modules"),
 ];
 
+config.resolver.assetExts = config.resolver.assetExts.filter(ext => ext !== 'svg');
 config.resolver.assetExts.push('riv');
+config.resolver.sourceExts.push('svg');
+
+config.transformer.babelTransformerPath = require.resolve('react-native-svg-transformer');
 
 config.resolver.extraNodeModules = {
     ...config.resolver.extraNodeModules,

@@ -5,10 +5,26 @@ import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Control, Controller, FieldError, FieldValues, Path } from "react-hook-form";
-import { ActivityIndicator, TextInputProps, TouchableOpacity, View } from "react-native";
+import {
+    Control,
+    Controller,
+    FieldError,
+    FieldValues,
+    Path,
+} from "react-hook-form";
+import {
+    ActivityIndicator,
+    TextInputProps,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { Eye, EyeOff } from "lucide-react-native";
+import { Icon } from "@/components/ui/icon";
 
-interface FormFieldProps<T extends FieldValues> extends Omit<TextInputProps, 'onChangeText' | 'onBlur' | 'value'> {
+interface FormFieldProps<T extends FieldValues> extends Omit<
+    TextInputProps,
+    "onChangeText" | "onBlur" | "value"
+> {
     control: Control<T>;
     name: Path<T>;
     label: string;
@@ -22,9 +38,10 @@ export function FormField<T extends FieldValues>({
     label,
     error,
     secureToggle,
+    secureTextEntry,
     ...inputProps
 }: FormFieldProps<T>) {
-    const [secure, setSecure] = useState(!!inputProps.secureTextEntry);
+    const [secure, setSecure] = useState(!!secureTextEntry);
 
     return (
         <View className="mb-4">
@@ -49,14 +66,15 @@ export function FormField<T extends FieldValues>({
                             aria-invalid={!!error}
                             {...inputProps}
                         />
-                        {secureToggle && (
+                        {secureToggle && value && value.length > 0 && (
                             <TouchableOpacity
                                 onPress={() => setSecure((v) => !v)}
                                 className="absolute right-3 top-2.5 p-1"
                             >
-                                <Text className="text-base">
-                                    {secure ? "👁" : "🙈"}
-                                </Text>
+                                <Icon
+                                    as={secure ? EyeOff : Eye}
+                                    className="text-muted-foreground size-5"
+                                />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -117,18 +135,19 @@ export function Divider({ label = "OR" }: { label?: string }) {
 
 interface SocialButtonProps {
     onPress: () => void;
-    icon: string;
+    children: React.ReactNode;
+    text: string;
 }
 
-export function SocialButton({ onPress, icon }: SocialButtonProps) {
+export function SocialButton({ onPress, children, text }: SocialButtonProps) {
     return (
         <Button
             variant="outline"
-            size="icon"
             onPress={onPress}
-            className="w-12 h-12 rounded-lg"
+            className="h-12 rounded-lg flex-row items-center justify-center gap-2 w-full"
         >
-            <Text className="text-xl">{icon}</Text>
+            <View className="w-5 h-5">{children}</View>
+            <Text className="text-foreground font-medium">{text}</Text>
         </Button>
     );
 }
@@ -164,7 +183,7 @@ export function AuthContainer({
     subtitle?: string;
 }) {
     return (
-        <View className="flex-1 bg-background px-6 pt-16">
+        <View className="flex-1 bg-background p-6 pb-8">
             <Text variant="h1" className="text-left mb-2">
                 {title}
             </Text>

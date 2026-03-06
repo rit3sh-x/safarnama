@@ -8,3 +8,5 @@ export const PAGINATION = {
 
 export const Owner = roleValidator.members[0];
 export const Member = roleValidator.members[1];
+
+export const MAX_FILE_SIZE = 1 * 1024 * 1024;

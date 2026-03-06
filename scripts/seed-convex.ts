@@ -14,14 +14,15 @@ dotenv.config({ path: ".env.local", override: true });
 const isProd = process.argv.slice(2).includes("--prod");
 const envFlag = isProd ? "--prod" : "";
 
-if isProd) {
-  execSync(
-      `npx convex env set NODE_ENV "production" ${envFlag}`,
-      { stdio: "inherit" }
-  );
+if (isProd) {
+    execSync(`npx convex env set NODE_ENV "production" ${envFlag}`, {
+        stdio: "inherit",
+    });
 }
 
-console.log(`🚀 Importing secrets to ${isProd ? "PRODUCTION" : "DEVELOPMENT"}...`);
+console.log(
+    `🚀 Importing secrets to ${isProd ? "PRODUCTION" : "DEVELOPMENT"}...`
+);
 
 for (const key of KEYS) {
     const value = process.env[key]!;
