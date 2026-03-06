@@ -10,6 +10,7 @@ import { PortalHost } from "@rn-primitives/portal";
 import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import type { AuthClient } from "@convex-dev/better-auth/react";
 import "react-native-reanimated";
 
@@ -21,7 +22,7 @@ import {
 } from "@/modules/auth/context/auth-context";
 import { OnboardingProvider } from "@/modules/onboarding/context/onboarding-context";
 import "./globals.css";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 const convex = new ConvexReactClient(
     process.env.EXPO_PUBLIC_CONVEX_URL as string,
@@ -39,13 +40,8 @@ function AuthGate() {
 
     const router = useRouter();
     const segments = useSegments();
-    const hasNavigated = useRef(false);
-
     useEffect(() => {
-        if (isLoading) {
-            hasNavigated.current = false;
-            return;
-        }
+        if (isLoading) return;
 
         const inAuthGroup = segments[0] === "(auth)";
         const inHomeGroup = segments[0] === "(home)";
@@ -96,17 +92,19 @@ function AuthGate() {
 
 export default function RootLayout() {
     return (
-        <SafeAreaProvider>
-            <OnboardingProvider>
-                <ConvexBetterAuthProvider
-                    client={convex}
-                    authClient={authClient as unknown as AuthClient}
-                >
-                    <AuthenticationProvider>
-                        <AuthGate />
-                    </AuthenticationProvider>
-                </ConvexBetterAuthProvider>
-            </OnboardingProvider>
-        </SafeAreaProvider>
+        <GestureHandlerRootView className="flex-1">
+            <SafeAreaProvider>
+                <OnboardingProvider>
+                    <ConvexBetterAuthProvider
+                        client={convex}
+                        authClient={authClient as unknown as AuthClient}
+                    >
+                        <AuthenticationProvider>
+                            <AuthGate />
+                        </AuthenticationProvider>
+                    </ConvexBetterAuthProvider>
+                </OnboardingProvider>
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
     );
 }

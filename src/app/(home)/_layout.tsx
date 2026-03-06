@@ -1,13 +1,36 @@
-import { Tabs } from "expo-router";
+import { TopBar } from "@/modules/dashboard/ui/components/top-bar";
 import { Authenticated } from "convex/react";
-import { MapIcon, SettingsIcon, HomeIcon, BookTextIcon, Wallet2Icon } from "lucide-react-native";
+import { Href, router, Tabs, usePathname } from "expo-router";
+import {
+    BookTextIcon,
+    HomeIcon,
+    MapIcon,
+    SettingsIcon,
+    Wallet2Icon,
+    type LucideIcon,
+} from "lucide-react-native";
+import { useCallback, useMemo, useRef } from "react";
+import { Pressable, Text, useColorScheme, View } from "react-native";
+import {
+    Directions,
+    Gesture,
+    GestureDetector,
+} from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const TABS = [
-    { name: "dashboard", title: "Dashboard", icon: HomeIcon },
-    { name: "blogs/index", title: "Blogs", icon: BookTextIcon },
-    { name: "expenses/index", title: "Expenses", icon: Wallet2Icon },
-    { name: "trips/index", title: "Trips", icon: MapIcon },
-    { name: "settings/index", title: "Settings", icon: SettingsIcon },
+interface Tab {
+    name: string;
+    title: string;
+    icon: LucideIcon;
+    route: Href;
+}
+
+const TABS: Tab[] = [
+    { name: "dashboard", title: "Dashboard", icon: HomeIcon, route: "/(home)/dashboard" },
+    { name: "blogs/index", title: "Blogs", icon: BookTextIcon, route: "/(home)/blogs" },
+    { name: "expenses/index", title: "Expenses", icon: Wallet2Icon, route: "/(home)/expenses" },
+    { name: "trips/index", title: "Trips", icon: MapIcon, route: "/(home)/trips" },
+    { name: "settings/index", title: "Settings", icon: SettingsIcon, route: "/(home)/settings" },
 ];
 
 const HIDDEN_ROUTES = [
@@ -16,30 +39,149 @@ const HIDDEN_ROUTES = [
     "trips/[tripId]/expenses",
 ];
 
+const TAB_NAMES = TABS.map((t) => t.name);
+
+const THEME = {
+    light: {
+        background: "hsl(0, 0%, 100%)",
+        primary: "hsl(0, 0%, 9%)",
+        primaryForeground: "hsl(0, 0%, 98%)",
+        mutedForeground: "hsl(0, 0%, 45.1%)",
+        border: "hsl(0, 0%, 89.8%)",
+    },
+    dark: {
+        background: "hsl(0, 0%, 3.9%)",
+        primary: "hsl(0, 0%, 98%)",
+        primaryForeground: "hsl(0, 0%, 9%)",
+        mutedForeground: "hsl(0, 0%, 63.9%)",
+        border: "hsl(0, 0%, 14.9%)",
+    },
+} as const;
+
 export default function Layout() {
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === "dark";
+    const colors = isDark ? THEME.dark : THEME.light;
+    const pathname = usePathname();
+    const insets = useSafeAreaInsets();
+
+    const currentIndex = TAB_NAMES.findIndex((n) =>
+        pathname.includes(n.replace("/index", ""))
+    );
+    const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+    const indexRef = useRef(safeIndex);
+    indexRef.current = safeIndex;
+
+    const navigateToTab = useCallback((index: number) => {
+        if (index < 0 || index >= TABS.length || index === indexRef.current)
+            return;
+        router.replace(TABS[index].route);
+    }, []);
+
+    const composed = useMemo(
+        () =>
+            Gesture.Race(
+                Gesture.Fling()
+                    .runOnJS(true)
+                    .direction(Directions.LEFT)
+                    .onEnd(() => navigateToTab(indexRef.current + 1)),
+                Gesture.Fling()
+                    .runOnJS(true)
+                    .direction(Directions.RIGHT)
+                    .onEnd(() => navigateToTab(indexRef.current - 1))
+            ),
+        [navigateToTab]
+    );
+
+    const currentTitle = TABS[safeIndex]?.title ?? "";
+
     return (
         <Authenticated>
-            <Tabs screenOptions={{ headerShown: false }}>
-                {TABS.map(({ name, title, icon: Icon }) => (
-                    <Tabs.Screen
-                        key={name}
-                        name={name}
-                        options={{
-                            title,
-                            tabBarIcon: ({ color, size }) => (
-                                <Icon color={color} size={size} />
-                            ),
-                        }}
-                    />
-                ))}
-                {HIDDEN_ROUTES.map((name) => (
-                    <Tabs.Screen
-                        key={name}
-                        name={name}
-                        options={{ href: null }}
-                    />
-                ))}
-            </Tabs>
+            <View style={{ flex: 1, backgroundColor: colors.background }}>
+                <TopBar title={currentTitle} />
+
+                <GestureDetector gesture={composed}>
+                    <View style={{ flex: 1 }}>
+                        <Tabs
+                            screenOptions={{
+                                headerShown: false,
+                                tabBarStyle: { display: "none" },
+                                sceneStyle: {
+                                    backgroundColor: colors.background,
+                                },
+                                animation: "shift",
+                            }}
+                        >
+                            {TABS.map(({ name, title }) => (
+                                <Tabs.Screen
+                                    key={name}
+                                    name={name}
+                                    options={{ title }}
+                                />
+                            ))}
+                            {HIDDEN_ROUTES.map((name) => (
+                                <Tabs.Screen
+                                    key={name}
+                                    name={name}
+                                    options={{ href: null }}
+                                />
+                            ))}
+                        </Tabs>
+                    </View>
+                </GestureDetector>
+
+                <View
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: colors.background,
+                        borderTopColor: colors.border,
+                        borderTopWidth: 1,
+                        paddingBottom: insets.bottom,
+                        paddingHorizontal: 32,
+                        paddingTop: 6,
+                        gap: 4,
+                    }}
+                >
+                    {TABS.map(({ name, title, icon: Icon }, index) => {
+                        const isActive = index === safeIndex;
+                        const color = isActive ? colors.primaryForeground : colors.mutedForeground;
+
+                        return (
+                            <Pressable
+                                key={name}
+                                onPress={() => navigateToTab(index)}
+                                style={{
+                                    flex: isActive ? 1 : 0,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 4,
+                                    height: 36,
+                                    width: 54,
+                                    borderRadius: 999,
+                                    backgroundColor: isActive ? colors.primary : "transparent",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <Icon color={color} size={18} />
+                                {isActive && (
+                                    <Text
+                                        style={{
+                                            color,
+                                            fontSize: 12,
+                                            fontWeight: "600",
+                                        }}
+                                        numberOfLines={1}
+                                    >
+                                        {title}
+                                    </Text>
+                                )}
+                            </Pressable>
+                        );
+                    })}
+                </View>
+            </View>
         </Authenticated>
     );
 }
