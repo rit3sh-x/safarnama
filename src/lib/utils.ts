@@ -46,5 +46,13 @@ export function stringToHex(str: string): string {
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return `#${((hash >>> 0) & 0xFFFFFF).toString(16).padStart(6, "0")}`;
+    return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`;
+}
+
+export function getInitials(name: string) {
+    return name
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? "")
+        .join("");
 }

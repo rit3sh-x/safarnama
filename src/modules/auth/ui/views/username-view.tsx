@@ -7,7 +7,7 @@ import {
     withTiming,
     Easing,
 } from "react-native-reanimated";
-import { UsernameScreen } from "../components/username-form";
+import { UsernameForm } from "../components/username-form";
 import TravellerSvg from "@/assets/auth/traveller.svg";
 
 export function UsernameView() {
@@ -34,7 +34,7 @@ export function UsernameView() {
                 className="absolute bottom-0 left-0 right-0 bg-background rounded-t-4xl overflow-hidden shadow-lg shadow-black/10"
                 style={animatedStyle}
             >
-                <UsernameScreen />
+                <UsernameForm />
             </NativeOnlyAnimatedView>
         </View>
     );

@@ -31,7 +31,7 @@ const Page = () => {
             await changeUsername({
                 username: "hello",
                 imageUrl: url ?? undefined,
-            })
+            });
         } catch (e) {
             console.error("Upload failed:", e);
         }
@@ -40,11 +40,15 @@ const Page = () => {
     return (
         <View className="flex-1 w-full items-center justify-center gap-4">
             <Text className="text-foreground text-lg">Dashboard</Text>
-            <Text className="text-muted-foreground">user.image: {user?.image ?? "none"}</Text>
+            <Text className="text-muted-foreground">
+                user.image: {user?.image ?? "none"}
+            </Text>
 
             {user?.image && (
                 <View className="items-center gap-1">
-                    <Text className="text-muted-foreground text-sm">Profile image:</Text>
+                    <Text className="text-muted-foreground text-sm">
+                        Profile image:
+                    </Text>
                     <Image
                         source={{ uri: user.image }}
                         style={{ width: 96, height: 96, borderRadius: 48 }}
@@ -57,12 +61,16 @@ const Page = () => {
                 onPress={testUpload}
                 className="bg-primary px-6 py-3 rounded-lg"
             >
-                <Text className="text-primary-foreground font-medium">Test Upload</Text>
+                <Text className="text-primary-foreground font-medium">
+                    Test Upload
+                </Text>
             </TouchableOpacity>
 
             {uploadedUrl && (
                 <View className="items-center gap-1">
-                    <Text className="text-muted-foreground text-sm">Test upload result:</Text>
+                    <Text className="text-muted-foreground text-sm">
+                        Test upload result:
+                    </Text>
                     <Image
                         source={{ uri: uploadedUrl }}
                         style={{ width: 96, height: 96, borderRadius: 48 }}

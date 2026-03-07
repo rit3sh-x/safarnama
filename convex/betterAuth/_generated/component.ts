@@ -99,6 +99,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   metadata: any;
                   name: string;
                   slug: string;
+                  updatedAt: number;
                 };
                 model: "organization";
               }
@@ -316,6 +317,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -604,6 +606,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -1025,6 +1028,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   metadata?: any;
                   name?: string;
                   slug?: string;
+                  updatedAt?: number;
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -1033,6 +1037,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -1383,6 +1388,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   metadata?: any;
                   name?: string;
                   slug?: string;
+                  updatedAt?: number;
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -1391,6 +1397,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -1499,5 +1506,44 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+    };
+    methods: {
+      orgs: {
+        countUserMemberships: FunctionReference<
+          "query",
+          "internal",
+          { userId: string },
+          any,
+          Name
+        >;
+        deleteOrgAndRelated: FunctionReference<
+          "mutation",
+          "internal",
+          { organizationId: string },
+          any,
+          Name
+        >;
+        getOrgsByIds: FunctionReference<
+          "query",
+          "internal",
+          { orgIds: Array<string> },
+          any,
+          Name
+        >;
+        listOrgMemberIds: FunctionReference<
+          "query",
+          "internal",
+          { organizationId: string },
+          any,
+          Name
+        >;
+        listUserMemberships: FunctionReference<
+          "query",
+          "internal",
+          { userId: string },
+          any,
+          Name
+        >;
+      };
     };
   };

@@ -22,6 +22,7 @@ config.resolver.extraNodeModules = {
     ...config.resolver.extraNodeModules,
     "@backend/api": path.resolve(projectRoot, "convex/_generated/api"),
     "@backend/dataModel": path.resolve(projectRoot, "convex/_generated/dataModel"),
+    "@backend/authDataModel": path.resolve(projectRoot, "convex/betterAuth/_generated/dataModel"),
     "@backend/types": path.resolve(projectRoot, "convex/types"),
     "@": path.resolve(projectRoot, "src"),
 };

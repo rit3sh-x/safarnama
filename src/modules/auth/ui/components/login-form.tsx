@@ -21,11 +21,11 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-interface LoginScreenProps {
+interface LoginFormProps {
     onNavigateSignUp: () => void;
 }
 
-export function LoginForm({ onNavigateSignUp }: LoginScreenProps) {
+export function LoginForm({ onNavigateSignUp }: LoginFormProps) {
     const {
         control,
         handleSubmit,

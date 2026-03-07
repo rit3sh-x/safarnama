@@ -7,9 +7,9 @@ import {
     withTiming,
     Easing,
 } from "react-native-reanimated";
-import { SignUpScreen } from "../components/signup-form";
+import { SignUpForm } from "../components/signup-form";
 import { useRouter } from "expo-router";
-import { scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnRN } from "react-native-worklets";
 import BookingSvg from "@/assets/auth/booking.svg";
 
 export function SignUpView() {
@@ -56,7 +56,7 @@ export function SignUpView() {
                 className="absolute bottom-0 left-0 right-0 bg-background rounded-t-4xl overflow-hidden shadow-lg shadow-black/10"
                 style={animatedStyle}
             >
-                <SignUpScreen onNavigateLogin={onNavigateLogin} />
+                <SignUpForm onNavigateLogin={onNavigateLogin} />
             </NativeOnlyAnimatedView>
         </View>
     );

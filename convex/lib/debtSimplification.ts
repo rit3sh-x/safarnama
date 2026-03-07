@@ -4,56 +4,11 @@ export interface Transaction {
     amount: number;
 }
 
-const CURRENCY_DECIMALS: Record<string, number> = {
-    JPY: 0,
-    KRW: 0,
-    VND: 0,
-    IDR: 0,
-    ISK: 0,
-    UGX: 0,
-    CLP: 0,
-    PYG: 0,
-    RWF: 0,
-    USD: 2,
-    EUR: 2,
-    GBP: 2,
-    AUD: 2,
-    CAD: 2,
-    CHF: 2,
-    CNY: 2,
-    INR: 2,
-    MXN: 2,
-    SGD: 2,
-    HKD: 2,
-    NOK: 2,
-    SEK: 2,
-    DKK: 2,
-    NZD: 2,
-    ZAR: 2,
-    BRL: 2,
-    AED: 2,
-    KWD: 3,
-    IQD: 3,
-    OMR: 3,
-    BHD: 3,
-    JOD: 3,
-    TND: 3,
-};
-
-const DEFAULT_DECIMALS = 2;
-
-function precisionFor(currency: string): number {
-    return (
-        10 ** (CURRENCY_DECIMALS[currency.toUpperCase()] ?? DEFAULT_DECIMALS)
-    );
-}
+const PRECISION = 100; // INR has 2 decimal places
 
 export function simplifyDebts(
-    splits: { paidBy: string; owedBy: string; amount: number }[],
-    currency: string
+    splits: { paidBy: string; owedBy: string; amount: number }[]
 ): Transaction[] {
-    const PRECISION = precisionFor(currency);
-
     const balance = new Map<string, number>();
     const credit = (id: string, delta: number) =>
         balance.set(id, (balance.get(id) ?? 0) + delta);

@@ -26,17 +26,36 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-    { name: "dashboard", title: "Dashboard", icon: HomeIcon, route: "/(home)/dashboard" },
-    { name: "blogs/index", title: "Blogs", icon: BookTextIcon, route: "/(home)/blogs" },
-    { name: "expenses/index", title: "Expenses", icon: Wallet2Icon, route: "/(home)/expenses" },
-    { name: "trips/index", title: "Trips", icon: MapIcon, route: "/(home)/trips" },
-    { name: "settings/index", title: "Settings", icon: SettingsIcon, route: "/(home)/settings" },
-];
-
-const HIDDEN_ROUTES = [
-    "blogs/[blogId]",
-    "trips/[tripId]/chat",
-    "trips/[tripId]/expenses",
+    {
+        name: "dashboard",
+        title: "Dashboard",
+        icon: HomeIcon,
+        route: "/(home)/dashboard",
+    },
+    {
+        name: "trips",
+        title: "Trips",
+        icon: MapIcon,
+        route: "/(home)/trips",
+    },
+    {
+        name: "expenses",
+        title: "Expenses",
+        icon: Wallet2Icon,
+        route: "/(home)/expenses",
+    },
+    {
+        name: "blogs",
+        title: "Blogs",
+        icon: BookTextIcon,
+        route: "/(home)/blogs",
+    },
+    {
+        name: "settings",
+        title: "Settings",
+        icon: SettingsIcon,
+        route: "/(home)/settings",
+    },
 ];
 
 const TAB_NAMES = TABS.map((t) => t.name);
@@ -65,9 +84,7 @@ export default function Layout() {
     const pathname = usePathname();
     const insets = useSafeAreaInsets();
 
-    const currentIndex = TAB_NAMES.findIndex((n) =>
-        pathname.includes(n.replace("/index", ""))
-    );
+    const currentIndex = TAB_NAMES.findIndex((n) => pathname.includes(n));
     const safeIndex = currentIndex === -1 ? 0 : currentIndex;
     const indexRef = useRef(safeIndex);
     indexRef.current = safeIndex;
@@ -119,13 +136,6 @@ export default function Layout() {
                                     options={{ title }}
                                 />
                             ))}
-                            {HIDDEN_ROUTES.map((name) => (
-                                <Tabs.Screen
-                                    key={name}
-                                    name={name}
-                                    options={{ href: null }}
-                                />
-                            ))}
                         </Tabs>
                     </View>
                 </GestureDetector>
@@ -137,15 +147,17 @@ export default function Layout() {
                         backgroundColor: colors.background,
                         borderTopColor: colors.border,
                         borderTopWidth: 1,
-                        paddingBottom: insets.bottom,
+                        paddingBottom: insets.bottom + 16,
                         paddingHorizontal: 32,
-                        paddingTop: 6,
+                        paddingTop: 12,
                         gap: 4,
                     }}
                 >
                     {TABS.map(({ name, title, icon: Icon }, index) => {
                         const isActive = index === safeIndex;
-                        const color = isActive ? colors.primaryForeground : colors.mutedForeground;
+                        const color = isActive
+                            ? colors.primaryForeground
+                            : colors.mutedForeground;
 
                         return (
                             <Pressable
@@ -160,7 +172,9 @@ export default function Layout() {
                                     height: 36,
                                     width: 54,
                                     borderRadius: 999,
-                                    backgroundColor: isActive ? colors.primary : "transparent",
+                                    backgroundColor: isActive
+                                        ? colors.primary
+                                        : "transparent",
                                     overflow: "hidden",
                                 }}
                             >

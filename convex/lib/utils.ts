@@ -1,8 +1,9 @@
 import { APIError } from "better-auth/api";
+import { ConvexError } from "convex/values";
 import { GenericCtx } from "@convex-dev/better-auth";
 import { DataModel, Id } from "../_generated/dataModel";
 import { components } from "../_generated/api";
-import { Doc } from "../betterAuth/_generated/dataModel";
+import { Doc, Id as IdAuth } from "../betterAuth/_generated/dataModel";
 import { QueryCtx, MutationCtx } from "../_generated/server";
 
 export async function requireUserAccess(ctx: GenericCtx<DataModel>) {
@@ -48,9 +49,26 @@ export async function requireOrgAccess(
     return { user, member };
 }
 
-export async function getTrip(ctx: QueryCtx | MutationCtx, tripId: Id<"trip">) {
+export async function getTripFromTripId(
+    ctx: QueryCtx | MutationCtx,
+    tripId: Id<"trip">
+) {
     const trip = await ctx.db.get(tripId);
-    if (!trip) throw new Error("Trip not found");
+    if (!trip)
+        throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
+    return trip;
+}
+
+export async function getTripFromOrgId(
+    ctx: QueryCtx | MutationCtx,
+    orgId: IdAuth<"organization">
+) {
+    const trip = await ctx.db
+        .query("trip")
+        .withIndex("orgId", (q) => q.eq("orgId", orgId))
+        .unique();
+    if (!trip)
+        throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
     return trip;
 }
 
@@ -59,7 +77,8 @@ export async function requireTripMember(
     tripId: Id<"trip">
 ) {
     const trip = await ctx.db.get(tripId);
-    if (!trip) throw new Error("Trip not found");
+    if (!trip)
+        throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
 
     const user = await requireUserAccess(ctx);
 
@@ -89,5 +108,30 @@ export async function requireTripAdmin(
     const result = await requireTripMember(ctx, tripId);
     if (result.member.role !== "owner")
         throw new APIError("FORBIDDEN", { message: "Admin access required." });
+    return result;
+}
+
+type Permission = "member:invite" | "member:add" | "member:remove";
+
+const ROLE_PERMISSIONS: Record<string, Permission[]> = {
+    owner: ["member:invite", "member:add", "member:remove"],
+    member: ["member:invite", "member:add"],
+};
+
+export function hasPermission(role: string, permission: Permission): boolean {
+    return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
+}
+
+export async function requireTripPermission(
+    ctx: QueryCtx | MutationCtx,
+    tripId: Id<"trip">,
+    permission: Permission
+) {
+    const result = await requireTripMember(ctx, tripId);
+    if (!hasPermission(result.member.role, permission)) {
+        throw new APIError("FORBIDDEN", {
+            message: `Missing permission: ${permission}`,
+        });
+    }
     return result;
 }

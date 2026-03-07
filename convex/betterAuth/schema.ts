@@ -76,9 +76,11 @@ export const tables = {
         slug: v.string(),
         logo: v.optional(v.union(v.null(), v.string())),
         createdAt: v.number(),
+        updatedAt: v.number(),
         metadata: v.any(),
     })
         .index("name", ["name"])
+        .index("updatedAt", ["updatedAt"])
         .index("slug", ["slug"]),
 
     member: defineTable({

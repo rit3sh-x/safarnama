@@ -17,6 +17,9 @@
       "@backend/dataModel": [
         "./convex/_generated/dataModel"
       ],
+      "@backend/authDataModel": [
+        "./convex/betterAuth/_generated/dataModel"
+      ],
       "@backend/types": [
         "./convex/types"
       ],

@@ -1,19 +1,8 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { requireTripMember } from "../lib/utils";
-import { PAGINATION } from "../lib/constants";
+import { paginationOptsValidator } from "convex/server";
 import { simplifyDebts } from "../lib/debtSimplification";
-
-const categoryValidator = v.optional(
-    v.union(
-        v.literal("food"),
-        v.literal("transport"),
-        v.literal("accommodation"),
-        v.literal("activities"),
-        v.literal("shopping"),
-        v.literal("other")
-    )
-);
 
 const splitTypeValidator = v.union(
     v.literal("equal"),
@@ -35,9 +24,7 @@ export const create = mutation({
         tripId: v.id("trip"),
         title: v.string(),
         amount: v.number(),
-        currency: v.string(),
         paidBy: v.string(),
-        category: categoryValidator,
         date: v.number(),
         notes: v.optional(v.string()),
         receiptUrl: v.optional(v.string()),
@@ -51,7 +38,6 @@ export const create = mutation({
         const expenseId = await ctx.db.insert("expense", {
             tripId,
             ...fields,
-            createdAt: now,
             updatedAt: now,
         });
 
@@ -73,8 +59,7 @@ export const create = mutation({
             senderId: user._id,
             type: "expense_event",
             expenseId,
-            content: `added expense: ${fields.title} — ${fields.currency} ${fields.amount.toFixed(2)}`,
-            createdAt: now,
+            content: `added expense: ${fields.title} — ₹${fields.amount.toFixed(2)}`,
         });
 
         return expenseId;
@@ -84,18 +69,15 @@ export const create = mutation({
 export const list = query({
     args: {
         tripId: v.id("trip"),
-        cursor: v.optional(v.string()),
+        paginationOpts: paginationOptsValidator,
     },
-    handler: async (ctx, { tripId, cursor }) => {
+    handler: async (ctx, { tripId, paginationOpts }) => {
         await requireTripMember(ctx, tripId);
         return ctx.db
             .query("expense")
             .withIndex("tripId_date", (q) => q.eq("tripId", tripId))
             .order("desc")
-            .paginate({
-                numItems: PAGINATION.MESSAGES_PAGE_SIZE,
-                cursor: cursor ?? null,
-            });
+            .paginate(paginationOpts);
     },
 });
 
@@ -103,7 +85,11 @@ export const get = query({
     args: { expenseId: v.id("expense") },
     handler: async (ctx, { expenseId }) => {
         const expense = await ctx.db.get(expenseId);
-        if (!expense) throw new Error("Expense not found");
+        if (!expense)
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Expense not found",
+            });
         await requireTripMember(ctx, expense.tripId);
         const splits = await ctx.db
             .query("expenseSplit")
@@ -118,18 +104,23 @@ export const update = mutation({
         expenseId: v.id("expense"),
         title: v.optional(v.string()),
         amount: v.optional(v.number()),
-        currency: v.optional(v.string()),
-        category: categoryValidator,
         date: v.optional(v.number()),
         notes: v.optional(v.string()),
         receiptUrl: v.optional(v.string()),
     },
     handler: async (ctx, { expenseId, ...fields }) => {
         const expense = await ctx.db.get(expenseId);
-        if (!expense) throw new Error("Expense not found");
+        if (!expense)
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Expense not found",
+            });
         const { user, member } = await requireTripMember(ctx, expense.tripId);
         if (expense.paidBy !== user._id && member.role !== "owner")
-            throw new Error("Unauthorized");
+            throw new ConvexError({
+                code: "FORBIDDEN",
+                message: "Unauthorized",
+            });
         await ctx.db.patch(expenseId, { ...fields, updatedAt: Date.now() });
     },
 });
@@ -138,10 +129,17 @@ export const remove = mutation({
     args: { expenseId: v.id("expense") },
     handler: async (ctx, { expenseId }) => {
         const expense = await ctx.db.get(expenseId);
-        if (!expense) throw new Error("Expense not found");
+        if (!expense)
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Expense not found",
+            });
         const { user, member } = await requireTripMember(ctx, expense.tripId);
         if (expense.paidBy !== user._id && member.role !== "owner")
-            throw new Error("Unauthorized");
+            throw new ConvexError({
+                code: "FORBIDDEN",
+                message: "Unauthorized",
+            });
 
         const splits = await ctx.db
             .query("expenseSplit")
@@ -159,17 +157,28 @@ export const settleSplit = mutation({
     },
     handler: async (ctx, { expenseId, targetUserId }) => {
         const expense = await ctx.db.get(expenseId);
-        if (!expense) throw new Error("Expense not found");
+        if (!expense)
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Expense not found",
+            });
         const { user, member } = await requireTripMember(ctx, expense.tripId);
         if (expense.paidBy !== user._id && member.role !== "owner")
-            throw new Error("Unauthorized");
+            throw new ConvexError({
+                code: "FORBIDDEN",
+                message: "Unauthorized",
+            });
 
         const split = await ctx.db
             .query("expenseSplit")
             .withIndex("expenseId", (q) => q.eq("expenseId", expenseId))
             .filter((q) => q.eq(q.field("userId"), targetUserId))
             .unique();
-        if (!split) throw new Error("Split not found");
+        if (!split)
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Split not found",
+            });
         await ctx.db.patch(split._id, { settled: true, settledAt: Date.now() });
     },
 });
@@ -177,7 +186,7 @@ export const settleSplit = mutation({
 export const balances = query({
     args: { tripId: v.id("trip") },
     handler: async (ctx, { tripId }) => {
-        const { trip } = await requireTripMember(ctx, tripId);
+        await requireTripMember(ctx, tripId);
 
         const splits = await ctx.db
             .query("expenseSplit")
@@ -198,7 +207,7 @@ export const balances = query({
             });
         }
 
-        const simplified = simplifyDebts(rawDebts, trip.defaultCurrency);
+        const simplified = simplifyDebts(rawDebts);
 
         const netBalance: Record<string, number> = {};
         for (const { paidBy, owedBy, amount } of rawDebts) {
@@ -215,16 +224,16 @@ export const createSettlement = mutation({
         tripId: v.id("trip"),
         toUserId: v.string(),
         amount: v.number(),
-        currency: v.string(),
         note: v.optional(v.string()),
     },
-    handler: async (ctx, { tripId, ...rest }) => {
+    handler: async (ctx, { tripId, toUserId, amount, note }) => {
         const { user } = await requireTripMember(ctx, tripId);
         return ctx.db.insert("settlement", {
             tripId,
             fromUserId: user._id,
-            ...rest,
-            createdAt: Date.now(),
+            toUserId,
+            amount,
+            note,
         });
     },
 });

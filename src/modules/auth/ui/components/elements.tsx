@@ -18,6 +18,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Eye, EyeOff } from "lucide-react-native";
 import { Icon } from "@/components/ui/icon";
 
@@ -183,16 +184,22 @@ export function AuthContainer({
     subtitle?: string;
 }) {
     return (
-        <View className="flex-1 bg-background p-6 pb-8">
-            <Text variant="h1" className="text-left mb-2">
-                {title}
-            </Text>
-            {subtitle && (
-                <Text variant="muted" className="mb-8">
-                    {subtitle}
+        <KeyboardAwareScrollView
+            bottomOffset={20}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+        >
+            <View className="flex-1 bg-background p-6 pb-8">
+                <Text variant="h1" className="text-left mb-2">
+                    {title}
                 </Text>
-            )}
-            <View>{children}</View>
-        </View>
+                {subtitle && (
+                    <Text variant="muted" className="mb-8">
+                        {subtitle}
+                    </Text>
+                )}
+                <View>{children}</View>
+            </View>
+        </KeyboardAwareScrollView>
     );
 }

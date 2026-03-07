@@ -9,7 +9,7 @@ import {
 } from "react-native-reanimated";
 import { LoginForm } from "../components/login-form";
 import { useRouter } from "expo-router";
-import { scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnRN } from "react-native-worklets";
 import PlaneSvg from "@/assets/auth/plane.svg";
 
 export function SignInView() {

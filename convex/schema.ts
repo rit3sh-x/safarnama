@@ -1,35 +1,40 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const currencyValidator = v.string();
-
 export default defineSchema({
     trip: defineTable({
         orgId: v.string(),
         title: v.string(),
         description: v.optional(v.string()),
         destination: v.string(),
-        coverImage: v.optional(v.string()),
         startDate: v.optional(v.number()),
         endDate: v.optional(v.number()),
-        defaultCurrency: currencyValidator,
         isPublic: v.boolean(),
         createdBy: v.string(),
         updatedAt: v.number(),
-        blog: v.optional(
-            v.object({
-                title: v.string(),
-                content: v.string(),
-                coverImage: v.optional(v.string()),
-                published: v.boolean(),
-                publishedAt: v.optional(v.number()),
-                updatedAt: v.number(),
-            })
-        ),
     })
         .index("orgId", ["orgId"])
         .index("isPublic", ["isPublic"])
-        .index("createdBy", ["createdBy"]),
+        .index("createdBy", ["createdBy"])
+        .searchIndex("search", {
+            searchField: "title",
+            filterFields: ["createdBy"],
+        }),
+
+    tripMember: defineTable({
+        tripId: v.id("trip"),
+        userId: v.string(),
+    }).index("userId", ["userId"]),
+
+    blog: defineTable({
+        tripId: v.id("trip"),
+        title: v.string(),
+        content: v.string(),
+        coverImage: v.optional(v.string()),
+        published: v.boolean(),
+        publishedAt: v.optional(v.number()),
+        updatedAt: v.number(),
+    }).index("tripId", ["tripId"]),
 
     blogComment: defineTable({
         tripId: v.id("trip"),
@@ -47,13 +52,12 @@ export default defineSchema({
         orgId: v.string(),
         userId: v.string(),
         message: v.optional(v.string()),
+        type: v.union(v.literal("user_request"), v.literal("admin_invite")),
         status: v.union(
             v.literal("pending"),
             v.literal("accepted"),
             v.literal("rejected")
         ),
-        reviewedBy: v.optional(v.string()),
-        reviewedAt: v.optional(v.number()),
     })
         .index("tripId", ["tripId"])
         .index("tripId_status", ["tripId", "status"])
@@ -77,6 +81,8 @@ export default defineSchema({
         ),
         editedAt: v.optional(v.number()),
         deletedAt: v.optional(v.number()),
+        pinnedAt: v.optional(v.number()),
+        pinnedBy: v.optional(v.string()),
     })
         .index("tripId", ["tripId"])
         .index("senderId", ["senderId"])
@@ -86,7 +92,6 @@ export default defineSchema({
         tripId: v.id("trip"),
         title: v.string(),
         amount: v.number(),
-        currency: currencyValidator,
         paidBy: v.string(),
         date: v.number(),
         notes: v.optional(v.string()),
@@ -117,12 +122,20 @@ export default defineSchema({
         .index("tripId_userId", ["tripId", "userId"])
         .index("userId_settled", ["userId", "settled"]),
 
+    reaction: defineTable({
+        messageId: v.id("message"),
+        tripId: v.id("trip"),
+        userId: v.string(),
+        emoji: v.string(),
+    })
+        .index("messageId", ["messageId"])
+        .index("messageId_userId_emoji", ["messageId", "userId", "emoji"]),
+
     settlement: defineTable({
         tripId: v.id("trip"),
         fromUserId: v.string(),
         toUserId: v.string(),
         amount: v.number(),
-        currency: currencyValidator,
         note: v.optional(v.string()),
     })
         .index("tripId", ["tripId"])

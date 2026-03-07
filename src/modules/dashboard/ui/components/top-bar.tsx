@@ -23,7 +23,9 @@ export function TopBar({ title }: TopBarProps) {
             className="flex-row items-center justify-between px-4 pb-3"
             style={{ paddingTop: top }}
         >
-            <Text className="text-xl font-semibold text-foreground">{title}</Text>
+            <Text className="text-xl font-semibold text-foreground">
+                {title}
+            </Text>
 
             <TouchableOpacity
                 onPress={() => router.push("/(home)/settings")}
@@ -33,22 +35,19 @@ export function TopBar({ title }: TopBarProps) {
                     width: 40,
                     height: 40,
                     borderRadius: 20,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
                 }}
             >
                 {user?.image ? (
                     <Image
                         source={{ uri: user.image }}
-                        style={{ width: '100%', height: '100%' }}
+                        style={{ width: "100%", height: "100%" }}
                         contentFit="cover"
                     />
                 ) : (
-                    <Icon
-                        as={UserCircle2}
-                        className="text-white/90 size-7"
-                    />
+                    <Icon as={UserCircle2} className="text-white/90 size-7" />
                 )}
             </TouchableOpacity>
         </View>

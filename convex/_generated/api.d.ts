@@ -154,6 +154,7 @@ export declare const components: {
                   metadata: any;
                   name: string;
                   slug: string;
+                  updatedAt: number;
                 };
                 model: "organization";
               }
@@ -370,6 +371,7 @@ export declare const components: {
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -657,6 +659,7 @@ export declare const components: {
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -1075,6 +1078,7 @@ export declare const components: {
                   metadata?: any;
                   name?: string;
                   slug?: string;
+                  updatedAt?: number;
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -1083,6 +1087,7 @@ export declare const components: {
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -1432,6 +1437,7 @@ export declare const components: {
                   metadata?: any;
                   name?: string;
                   slug?: string;
+                  updatedAt?: number;
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -1440,6 +1446,7 @@ export declare const components: {
                     | "slug"
                     | "logo"
                     | "createdAt"
+                    | "updatedAt"
                     | "metadata"
                     | "_id";
                   operator?:
@@ -1547,6 +1554,40 @@ export declare const components: {
         },
         any
       >;
+    };
+    methods: {
+      orgs: {
+        countUserMemberships: FunctionReference<
+          "query",
+          "internal",
+          { userId: string },
+          any
+        >;
+        deleteOrgAndRelated: FunctionReference<
+          "mutation",
+          "internal",
+          { organizationId: string },
+          any
+        >;
+        getOrgsByIds: FunctionReference<
+          "query",
+          "internal",
+          { orgIds: Array<string> },
+          any
+        >;
+        listOrgMemberIds: FunctionReference<
+          "query",
+          "internal",
+          { organizationId: string },
+          any
+        >;
+        listUserMemberships: FunctionReference<
+          "query",
+          "internal",
+          { userId: string },
+          any
+        >;
+      };
     };
   };
   pushNotifications: {

@@ -18,6 +18,7 @@ uniwind-types.d.ts
 *.p12
 *.key
 *.mobileprovision
+/test
 
 # Metro
 .metro-health-check*

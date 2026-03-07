@@ -10,6 +10,7 @@ module.exports = function (api) {
           alias: {
             '@backend/api': './convex/_generated/api',
             '@backend/dataModel': './convex/_generated/dataModel',
+            '@backend/authDataModel': './convex/betterAuth/_generated/dataModel',
             '@backend/types': './convex/types',
             '@': './src',
           },

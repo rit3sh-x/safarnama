@@ -15,12 +15,15 @@ export const confirmUpload = mutation({
             throw new ConvexError({
                 code: "NOT_FOUND",
                 message: "File not found",
-            })
+            });
         }
 
         if (metadata.size > MAX_FILE_SIZE) {
             await ctx.storage.delete(storageId);
-            throw new Error("File exceeds 1 MB limit — deleted");
+            throw new ConvexError({
+                code: "BAD_REQUEST",
+                message: "File exceeds 1 MB limit — deleted",
+            });
         }
 
         const url = await ctx.storage.getUrl(storageId);

@@ -24,7 +24,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export function UsernameScreen() {
+export function UsernameForm() {
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [imageError, setImageError] = useState<string | null>(null);
     const uploadFile = useUploadFileToConvex();
@@ -63,7 +63,9 @@ export function UsernameScreen() {
                     return;
                 }
 
-                const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+                const file = new File([blob], "avatar.jpg", {
+                    type: "image/jpeg",
+                });
                 const { url } = await uploadFile(file);
                 imageUrl = url ?? undefined;
             }
@@ -92,7 +94,9 @@ export function UsernameScreen() {
             <View>
                 <View className="items-center mb-6">
                     <TouchableOpacity onPress={pickImage}>
-                        <View className={`w-24 h-24 rounded-full bg-muted items-center justify-center overflow-hidden border-2 ${imageError ? "border-destructive" : "border-border"}`}>
+                        <View
+                            className={`w-24 h-24 rounded-full bg-muted items-center justify-center overflow-hidden border-2 ${imageError ? "border-destructive" : "border-border"}`}
+                        >
                             {imageUri ? (
                                 <Image
                                     source={{ uri: imageUri }}
@@ -107,11 +111,17 @@ export function UsernameScreen() {
                             )}
                         </View>
                     </TouchableOpacity>
-                    <Text variant="small" className="text-muted-foreground mt-2">
+                    <Text
+                        variant="small"
+                        className="text-muted-foreground mt-2"
+                    >
                         Add a photo (optional)
                     </Text>
                     {imageError && (
-                        <Text variant="small" className="text-destructive mt-1 text-center">
+                        <Text
+                            variant="small"
+                            className="text-destructive mt-1 text-center"
+                        >
                             {imageError}
                         </Text>
                     )}

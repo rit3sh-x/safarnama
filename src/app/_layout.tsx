@@ -11,7 +11,9 @@ import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import type { AuthClient } from "@convex-dev/better-auth/react";
+import { Provider } from "jotai";
 import "react-native-reanimated";
 
 import { authClient } from "@/lib/auth-client";
@@ -45,6 +47,7 @@ function AuthGate() {
 
         const inAuthGroup = segments[0] === "(auth)";
         const inHomeGroup = segments[0] === "(home)";
+        const inCustomGroup = segments[0] === "(custom)";
         const inOnboarding = segments[0] === "onboarding";
 
         if (showOnboarding && !inOnboarding) {
@@ -52,14 +55,23 @@ function AuthGate() {
         } else if (showAuth && !inAuthGroup) {
             router.replace("/(auth)/signin");
         } else if (showUsername) {
-            const onUsernameScreen = inAuthGroup && segments.join("/").includes("create-username");
+            const onUsernameScreen =
+                inAuthGroup && segments.join("/").includes("create-username");
             if (!onUsernameScreen) {
                 router.replace("/(auth)/sign-up/create-username");
             }
-        } else if (showHome && !inHomeGroup) {
+        } else if (showHome && !inHomeGroup && !inCustomGroup) {
             router.replace("/(home)/dashboard");
         }
-    }, [isLoading, showOnboarding, showAuth, showUsername, showHome, segments, router]);
+    }, [
+        isLoading,
+        showOnboarding,
+        showAuth,
+        showUsername,
+        showHome,
+        segments,
+        router,
+    ]);
 
     if (isLoading) {
         return (
@@ -77,10 +89,11 @@ function AuthGate() {
                     <Stack.Screen name="onboarding" />
                     <Stack.Screen name="(auth)" />
                     <Stack.Screen name="(home)" />
+                    <Stack.Screen name="(custom)" />
                 </Stack>
                 <NetworkModal />
                 <StatusBar
-                    hidden={true}
+                    style="auto"
                     translucent
                     backgroundColor="transparent"
                 />
@@ -93,18 +106,22 @@ function AuthGate() {
 export default function RootLayout() {
     return (
         <GestureHandlerRootView className="flex-1">
-            <SafeAreaProvider>
-                <OnboardingProvider>
-                    <ConvexBetterAuthProvider
-                        client={convex}
-                        authClient={authClient as unknown as AuthClient}
-                    >
-                        <AuthenticationProvider>
-                            <AuthGate />
-                        </AuthenticationProvider>
-                    </ConvexBetterAuthProvider>
-                </OnboardingProvider>
-            </SafeAreaProvider>
+            <KeyboardProvider>
+                <Provider>
+                    <SafeAreaProvider>
+                        <OnboardingProvider>
+                            <ConvexBetterAuthProvider
+                                client={convex}
+                                authClient={authClient as unknown as AuthClient}
+                            >
+                                <AuthenticationProvider>
+                                    <AuthGate />
+                                </AuthenticationProvider>
+                            </ConvexBetterAuthProvider>
+                        </OnboardingProvider>
+                    </SafeAreaProvider>
+                </Provider>
+            </KeyboardProvider>
         </GestureHandlerRootView>
     );
 }

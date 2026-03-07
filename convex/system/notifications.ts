@@ -7,13 +7,15 @@ export const sendPushNotificationToOne = internalMutation({
         to: v.id("user"),
         title: v.string(),
         body: v.optional(v.string()),
+        data: v.any(),
     },
-    handler: async (ctx, { title, to, body }) => {
+    handler: async (ctx, { title, to, body, data }) => {
         await pushNotifications.sendPushNotification(ctx, {
             userId: to,
             notification: {
                 title,
                 body,
+                data,
             },
         });
     },
@@ -26,15 +28,16 @@ export const sendPushNotificationToMany = internalMutation({
                 userId: v.id("user"),
                 title: v.string(),
                 body: v.optional(v.string()),
+                data: v.any(),
             })
         ),
     },
     handler: async (ctx, { notifications }) => {
         await Promise.allSettled(
-            notifications.map(({ userId, title, body }) =>
+            notifications.map(({ userId, title, body, data }) =>
                 pushNotifications.sendPushNotification(ctx, {
                     userId,
-                    notification: { title, body },
+                    notification: { title, body, data },
                 })
             )
         );

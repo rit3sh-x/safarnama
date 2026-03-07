@@ -1,47 +1,66 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { PAGINATION, Owner } from "../lib/constants";
-import { requireTripAdmin, requireTripMember } from "../lib/utils";
+import {
+    requireTripAdmin,
+    requireTripMember,
+    requireTripPermission,
+} from "../lib/utils";
 import { components } from "../_generated/api";
 import { Doc } from "../betterAuth/_generated/dataModel";
-import { PaginationResult } from "convex/server";
+import { paginationOptsValidator, PaginationResult } from "convex/server";
 
 export const list = query({
     args: {
         tripId: v.id("trip"),
-        cursor: v.optional(v.string()),
+        search: v.optional(v.string()),
+        paginationOpts: paginationOptsValidator,
     },
-    handler: async (ctx, { tripId, cursor }) => {
+    handler: async (ctx, { tripId, search, paginationOpts }) => {
         const { trip } = await requireTripMember(ctx, tripId);
 
-        const members: PaginationResult<{
-            member: Doc<"member">;
-            user: Doc<"user">;
-        }> = await ctx.runQuery(components.betterAuth.adapter.findMany, {
-            model: "member",
-            where: [
-                {
-                    field: "organizationId",
-                    value: trip.orgId,
-                    operator: "eq",
-                },
-            ],
-            join: [
-                {
-                    model: "user",
-                    on: [{ field: "id", value: "userId", operator: "eq" }],
-                },
-            ],
-            paginationOpts: {
-                cursor: cursor ?? null,
-                numItems: PAGINATION.MEMBERS_PAGE_SIZE,
-            },
-        });
+        const memberships: Doc<"member">[] = await ctx.runQuery(
+            components.betterAuth.methods.orgs.listOrgMemberIds,
+            { organizationId: trip.orgId }
+        );
 
-        // TODO: validate types
-        console.log(members);
+        const userIds = memberships.map((m) => m.userId);
 
-        return members;
+        const users: PaginationResult<Doc<"user">> = await ctx.runQuery(
+            components.betterAuth.adapter.findMany,
+            {
+                model: "user",
+                where: [
+                    {
+                        field: "_id",
+                        value: userIds,
+                        operator: "in" as const,
+                        connector: "AND" as const,
+                    },
+                    ...(search
+                        ? [
+                              {
+                                  field: "name",
+                                  value: search,
+                                  operator: "contains" as const,
+                              },
+                          ]
+                        : []),
+                ],
+                paginationOpts,
+            }
+        );
+
+        return {
+            ...memberships,
+            page: users.page
+                .filter((u) => Boolean(u.username))
+                .map((u) => ({
+                    name: u.name,
+                    username: u.username as string,
+                    image: u.image,
+                    id: u._id,
+                })),
+        };
     },
 });
 
@@ -51,7 +70,18 @@ export const remove = mutation({
         targetUserId: v.string(),
     },
     handler: async (ctx, { tripId, targetUserId }) => {
-        const { trip } = await requireTripAdmin(ctx, tripId);
+        const { trip, user } = await requireTripPermission(
+            ctx,
+            tripId,
+            "member:remove"
+        );
+
+        if (targetUserId === user._id) {
+            throw new ConvexError({
+                code: "BAD_REQUEST",
+                message: "Cannot remove yourself, use leave instead",
+            });
+        }
 
         const target: Doc<"member"> | null = await ctx.runQuery(
             components.betterAuth.adapter.findOne,
@@ -68,7 +98,18 @@ export const remove = mutation({
             }
         );
 
-        if (!target) throw new Error("Member not found");
+        if (!target)
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Member not found",
+            });
+
+        if (target.role === "owner") {
+            throw new ConvexError({
+                code: "FORBIDDEN",
+                message: "Cannot remove an owner",
+            });
+        }
 
         await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
             input: {
@@ -76,18 +117,35 @@ export const remove = mutation({
                 where: [{ field: "_id", value: target._id, operator: "eq" }],
             },
         });
+
+        const tripMember = await ctx.db
+            .query("tripMember")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("tripId"), tripId),
+                    q.eq(q.field("userId"), targetUserId)
+                )
+            )
+            .unique();
+        if (tripMember) await ctx.db.delete(tripMember._id);
+
+        await ctx.db.insert("message", {
+            tripId,
+            senderId: user._id,
+            type: "member_left",
+            content: `removed a member`,
+        });
     },
 });
 
 export const leave = mutation({
     args: { tripId: v.id("trip") },
     handler: async (ctx, { tripId }) => {
-        const { member, trip } = await requireTripMember(ctx, tripId);
+        const { member, user, trip } = await requireTripMember(ctx, tripId);
 
         if (member.role === "owner") {
-            const otherOwner: Doc<"member"> | null = await ctx.runQuery(
-                components.betterAuth.adapter.findOne,
-                {
+            const allMembers: PaginationResult<Doc<"member">> =
+                await ctx.runQuery(components.betterAuth.adapter.findMany, {
                     model: "member",
                     where: [
                         {
@@ -95,20 +153,12 @@ export const leave = mutation({
                             value: trip.orgId,
                             operator: "eq",
                         },
-                        {
-                            field: "userId",
-                            value: member.userId,
-                            operator: "ne",
-                            connector: "AND",
-                        },
-                        {
-                            field: "role",
-                            value: Owner.value,
-                            operator: "eq",
-                            connector: "AND",
-                        },
                     ],
-                }
+                    paginationOpts: { numItems: 100, cursor: null },
+                });
+
+            const otherOwner = allMembers.page.find(
+                (m) => m.userId !== user._id && m.role === "owner"
             );
 
             if (!otherOwner) {
@@ -125,6 +175,24 @@ export const leave = mutation({
                 model: "member",
                 where: [{ field: "_id", value: member._id, operator: "eq" }],
             },
+        });
+
+        const tripMember = await ctx.db
+            .query("tripMember")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("tripId"), tripId),
+                    q.eq(q.field("userId"), user._id)
+                )
+            )
+            .unique();
+        if (tripMember) await ctx.db.delete(tripMember._id);
+
+        await ctx.db.insert("message", {
+            tripId,
+            senderId: user._id,
+            type: "member_left",
+            content: "left the trip",
         });
     },
 });

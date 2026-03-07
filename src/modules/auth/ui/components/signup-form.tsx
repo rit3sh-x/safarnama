@@ -26,7 +26,7 @@ interface SignUpScreenProps {
     onNavigateLogin: () => void;
 }
 
-export function SignUpScreen({ onNavigateLogin }: SignUpScreenProps) {
+export function SignUpForm({ onNavigateLogin }: SignUpScreenProps) {
     const {
         control,
         handleSubmit,
