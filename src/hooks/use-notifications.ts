@@ -43,13 +43,19 @@ async function registerForPushNotifications() {
     return token.data;
 }
 
-export function usePushNotifications() {
-    const recordToken = useMutation(api.methods.notifications.recordToken); // 👈
+export function usePushNotifications(enabled: boolean) {
+    const recordToken = useMutation(api.methods.notifications.recordToken);
 
     useEffect(() => {
-        registerForPushNotifications().then((token) => {
-            if (token) recordToken({ token });
-        });
+        if (!enabled) return;
+
+        registerForPushNotifications()
+            .then((token) => {
+                if (token) recordToken({ token });
+            })
+            .catch((error) => {
+                console.warn("Push notification registration failed:", error);
+            });
 
         const sub = Notifications.addNotificationResponseReceivedListener(
             (response) => {
@@ -59,5 +65,5 @@ export function usePushNotifications() {
         );
 
         return () => sub.remove();
-    }, [recordToken]);
+    }, [enabled, recordToken]);
 }

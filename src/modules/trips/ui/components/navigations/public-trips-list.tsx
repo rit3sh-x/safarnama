@@ -1,13 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { getInitials, stringToHex } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
 import { Image } from "expo-image";
 import { useCallback } from "react";
 import { FlatList, Pressable, View } from "react-native";
-import type { TripOrg } from "../../../types";
+import type { PublicTrip } from "../../../types";
 
-export function TripListItemSkeleton() {
+function PublicTripItemSkeleton() {
     return (
         <View className="flex-row items-center px-4 py-3 gap-3">
             <Skeleton className="w-14 h-14 rounded-full" />
@@ -17,36 +16,34 @@ export function TripListItemSkeleton() {
                     <Skeleton className="h-3 w-10 rounded-md" />
                 </View>
                 <Skeleton className="h-3 w-24 rounded-md" />
-                <Skeleton className="h-3 w-40 rounded-md" />
             </View>
         </View>
     );
 }
 
-function TripListSkeletons() {
+function PublicTripSkeletons() {
     return (
         <>
             {Array.from({ length: 8 }).map((_, i) => (
-                <TripListItemSkeleton key={i} />
+                <PublicTripItemSkeleton key={i} />
             ))}
         </>
     );
 }
 
-interface TripListItemProps {
-    trip: TripOrg;
-    onPress: (id: string) => void;
+interface PublicTripItemProps {
+    trip: PublicTrip;
+    onPress: (tripId: string) => void;
 }
 
-function TripListItem({ trip, onPress }: TripListItemProps) {
+function PublicTripItem({ trip, onPress }: PublicTripItemProps) {
     const initials = getInitials(trip.name);
     const bgColor = stringToHex(trip.name);
-    const timeLabel = formatDistanceToNow(trip.updatedAt);
 
     return (
         <Pressable
-            onPress={() => onPress(trip.id)}
-            className="flex-row items-center px-4 py-3 gap-3 active:bg-muted/50"
+            onPress={() => onPress(trip.tripId)}
+            className="flex-row items-center rounded-lg overflow-hidden px-4 py-3 gap-3 active:bg-muted/50"
         >
             <View className="w-14 h-14 rounded-full overflow-hidden">
                 {trip.logo ? (
@@ -68,17 +65,20 @@ function TripListItem({ trip, onPress }: TripListItemProps) {
             </View>
 
             <View className="flex-1 gap-0.5">
-                <View className="flex-row items-center justify-between gap-2">
+                <Text
+                    className="text-base font-semibold text-foreground"
+                    numberOfLines={1}
+                >
+                    {trip.name}
+                </Text>
+                {trip.destination && (
                     <Text
-                        className="text-base font-semibold text-foreground flex-1"
+                        className="text-sm text-muted-foreground"
                         numberOfLines={1}
                     >
-                        {trip.name}
+                        {trip.destination}
                     </Text>
-                    <Text className="text-xs text-muted-foreground shrink-0">
-                        {timeLabel}
-                    </Text>
-                </View>
+                )}
             </View>
         </Pressable>
     );
@@ -88,29 +88,29 @@ function Separator() {
     return <View className="h-px bg-border mx-4" />;
 }
 
-interface TripsListProps {
-    trips: TripOrg[];
+interface PublicTripsListProps {
+    trips: PublicTrip[];
     isLoading: boolean;
     isDone: boolean;
     loadMore: () => void;
-    onPress: (id: string) => void;
+    onPress: (tripId: string) => void;
 }
 
-export function TripsList({
+export function PublicTripsList({
     trips,
     isLoading,
     isDone,
     loadMore,
     onPress,
-}: TripsListProps) {
+}: PublicTripsListProps) {
     const renderItem = useCallback(
-        ({ item }: { item: TripOrg }) => (
-            <TripListItem trip={item} onPress={onPress} />
+        ({ item }: { item: PublicTrip }) => (
+            <PublicTripItem trip={item} onPress={onPress} />
         ),
         [onPress]
     );
 
-    const keyExtractor = useCallback((item: TripOrg) => item.id, []);
+    const keyExtractor = useCallback((item: PublicTrip) => item.tripId, []);
 
     const onEndReached = useCallback(() => {
         if (!isDone && !isLoading) loadMore();
@@ -120,8 +120,8 @@ export function TripsList({
         if (isDone || trips.length === 0) return null;
         return (
             <View>
-                <TripListItemSkeleton />
-                <TripListItemSkeleton />
+                <PublicTripItemSkeleton />
+                <PublicTripItemSkeleton />
             </View>
         );
     }, [isDone, trips.length]);
@@ -129,7 +129,7 @@ export function TripsList({
     if (isLoading) {
         return (
             <View className="flex-1">
-                <TripListSkeletons />
+                <PublicTripSkeletons />
             </View>
         );
     }
@@ -138,7 +138,7 @@ export function TripsList({
         return (
             <View className="flex-1 items-center justify-center gap-2 py-20">
                 <Text className="text-muted-foreground text-base">
-                    No trips found
+                    No public trips found
                 </Text>
             </View>
         );

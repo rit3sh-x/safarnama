@@ -6,7 +6,8 @@ import {
     getTripFromOrgId,
 } from "../lib/utils";
 import { components } from "../_generated/api";
-import { Doc } from "../betterAuth/_generated/dataModel";
+import { Doc } from "../_generated/dataModel";
+import { Doc as BetterAuthDoc } from "../betterAuth/_generated/dataModel";
 import { LIMITS } from "../lib/constants";
 import { paginationOptsValidator } from "convex/server";
 
@@ -26,7 +27,7 @@ export const userSendRequest = mutation({
             });
         }
 
-        const member: Doc<"member"> | null = await ctx.runQuery(
+        const member: BetterAuthDoc<"member"> | null = await ctx.runQuery(
             components.betterAuth.adapter.findOne,
             {
                 model: "member",
@@ -97,6 +98,8 @@ export const userSendRequest = mutation({
             message,
             status: "pending",
             type: "user_request",
+            tripTitle: trip.title,
+            userName: user.name ?? "",
         });
     },
 });
@@ -108,61 +111,43 @@ export const userListRequests = query({
     },
     handler: async (ctx, { search, paginationOpts }) => {
         const user = await requireUserAccess(ctx);
-        const searchTerm = search?.trim().toLowerCase();
-        const pageSize = paginationOpts.numItems;
+        const searchTerm = search?.trim();
 
-        const baseQuery = () =>
-            ctx.db
+        if (searchTerm) {
+            const results = await ctx.db
                 .query("joinRequest")
-                .withIndex("userId_tripId", (qb) => qb.eq("userId", user._id))
-                .filter((qb) => qb.eq(qb.field("status"), "pending"));
+                .withSearchIndex("search_by_trip", (qb) =>
+                    qb
+                        .search("tripTitle", searchTerm)
+                        .eq("userId", user._id)
+                        .eq("status", "pending")
+                )
+                .take(paginationOpts.numItems);
 
-        if (!searchTerm) {
-            const results = await baseQuery().paginate(paginationOpts);
-            const enriched = await Promise.all(
-                results.page.map(async (req) => {
-                    const trip = await ctx.db.get(req.tripId);
-                    return { ...req, trip };
-                })
-            );
-            return { ...results, page: enriched };
-        }
-
-        const collected: any[] = [];
-        let cursor = paginationOpts.cursor;
-        let isDone = false;
-
-        while (collected.length < pageSize && !isDone) {
-            const batch = await baseQuery().paginate({
-                numItems: pageSize,
-                cursor,
-            });
-
-            const enriched = await Promise.all(
-                batch.page.map(async (req) => {
-                    const trip = await ctx.db.get(req.tripId);
-                    return { ...req, trip };
-                })
+            const page = await Promise.all(
+                results.map(async (req) => ({
+                    ...req,
+                    trip: await ctx.db.get(req.tripId),
+                }))
             );
 
-            for (const r of enriched) {
-                if (collected.length >= pageSize) break;
-                const title = r.trip?.title?.toLowerCase() ?? "";
-                const dest = r.trip?.destination?.toLowerCase() ?? "";
-                if (title.includes(searchTerm) || dest.includes(searchTerm)) {
-                    collected.push(r);
-                }
-            }
-
-            cursor = batch.continueCursor;
-            isDone = batch.isDone;
+            return { page, isDone: true, continueCursor: "" };
         }
 
-        return {
-            page: collected,
-            isDone,
-            continueCursor: cursor ?? "",
-        };
+        const results = await ctx.db
+            .query("joinRequest")
+            .withIndex("userId_tripId", (qb) => qb.eq("userId", user._id))
+            .filter((qb) => qb.eq(qb.field("status"), "pending"))
+            .paginate(paginationOpts);
+
+        const page = await Promise.all(
+            results.page.map(async (req) => ({
+                ...req,
+                trip: await ctx.db.get(req.tripId),
+            }))
+        );
+
+        return { ...results, page };
     },
 });
 
@@ -274,7 +259,7 @@ export const adminSendInvite = mutation({
         const trip = await getTripFromOrgId(ctx, orgId);
         await requireTripPermission(ctx, trip._id, "member:invite");
 
-        const member: Doc<"member"> | null = await ctx.runQuery(
+        const member: BetterAuthDoc<"member"> | null = await ctx.runQuery(
             components.betterAuth.adapter.findOne,
             {
                 model: "member",
@@ -334,6 +319,14 @@ export const adminSendInvite = mutation({
             });
         }
 
+        const targetUser: BetterAuthDoc<"user"> | null = await ctx.runQuery(
+            components.betterAuth.adapter.findOne,
+            {
+                model: "user",
+                where: [{ field: "_id", value: userId, operator: "eq" }],
+            }
+        );
+
         return ctx.db.insert("joinRequest", {
             tripId: trip._id,
             orgId: trip.orgId,
@@ -341,6 +334,8 @@ export const adminSendInvite = mutation({
             message,
             status: "pending",
             type: "admin_invite",
+            tripTitle: trip.title,
+            userName: targetUser?.name ?? "",
         });
     },
 });
@@ -354,19 +349,10 @@ export const adminListRequests = query({
     handler: async (ctx, { orgId, search, paginationOpts }) => {
         const trip = await getTripFromOrgId(ctx, orgId);
         await requireTripPermission(ctx, trip._id, "member:invite");
-        const searchTerm = search?.trim().toLowerCase();
-        const pageSize = paginationOpts.numItems;
+        const searchTerm = search?.trim();
 
-        const baseQuery = () =>
-            ctx.db
-                .query("joinRequest")
-                .withIndex("tripId_status", (qb) =>
-                    qb.eq("tripId", trip._id).eq("status", "pending")
-                )
-                .filter((qb) => qb.eq(qb.field("type"), "user_request"));
-
-        const enrichUser = async (req: any) => {
-            const user: Doc<"user"> | null = await ctx.runQuery(
+        const enrichUser = async (req: Doc<"joinRequest">) => {
+            const user: BetterAuthDoc<"user"> | null = await ctx.runQuery(
                 components.betterAuth.adapter.findOne,
                 {
                     model: "user",
@@ -378,45 +364,32 @@ export const adminListRequests = query({
             return { ...req, user };
         };
 
-        if (!searchTerm) {
-            const results = await baseQuery().paginate(paginationOpts);
-            const enriched = await Promise.all(results.page.map(enrichUser));
-            return { ...results, page: enriched };
+        if (searchTerm) {
+            const results = await ctx.db
+                .query("joinRequest")
+                .withSearchIndex("search_by_user", (qb) =>
+                    qb
+                        .search("userName", searchTerm)
+                        .eq("tripId", trip._id)
+                        .eq("status", "pending")
+                        .eq("type", "user_request")
+                )
+                .take(paginationOpts.numItems);
+
+            const enriched = await Promise.all(results.map(enrichUser));
+            return { page: enriched, isDone: true, continueCursor: "" };
         }
 
-        const collected: any[] = [];
-        let cursor = paginationOpts.cursor;
-        let isDone = false;
+        const results = await ctx.db
+            .query("joinRequest")
+            .withIndex("tripId_status", (qb) =>
+                qb.eq("tripId", trip._id).eq("status", "pending")
+            )
+            .filter((qb) => qb.eq(qb.field("type"), "user_request"))
+            .paginate(paginationOpts);
 
-        while (collected.length < pageSize && !isDone) {
-            const batch = await baseQuery().paginate({
-                numItems: pageSize,
-                cursor,
-            });
-
-            const enriched = await Promise.all(batch.page.map(enrichUser));
-
-            for (const r of enriched) {
-                if (collected.length >= pageSize) break;
-                const name = r.user?.name?.toLowerCase() ?? "";
-                const username = r.user?.username?.toLowerCase() ?? "";
-                if (
-                    name.includes(searchTerm) ||
-                    username.includes(searchTerm)
-                ) {
-                    collected.push(r);
-                }
-            }
-
-            cursor = batch.continueCursor;
-            isDone = batch.isDone;
-        }
-
-        return {
-            page: collected,
-            isDone,
-            continueCursor: cursor ?? "",
-        };
+        const enriched = await Promise.all(results.page.map(enrichUser));
+        return { ...results, page: enriched };
     },
 });
 

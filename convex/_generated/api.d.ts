@@ -151,7 +151,7 @@ export declare const components: {
                 data: {
                   createdAt: number;
                   logo?: null | string;
-                  metadata: any;
+                  metadata?: null | Record<string, string>;
                   name: string;
                   slug: string;
                   updatedAt: number;
@@ -1075,7 +1075,7 @@ export declare const components: {
                 update: {
                   createdAt?: number;
                   logo?: null | string;
-                  metadata?: any;
+                  metadata?: null | Record<string, string>;
                   name?: string;
                   slug?: string;
                   updatedAt?: number;
@@ -1434,7 +1434,7 @@ export declare const components: {
                 update: {
                   createdAt?: number;
                   logo?: null | string;
-                  metadata?: any;
+                  metadata?: null | Record<string, string>;
                   name?: string;
                   slug?: string;
                   updatedAt?: number;

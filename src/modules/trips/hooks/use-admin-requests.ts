@@ -5,18 +5,18 @@ import { FunctionArgs } from "convex/server";
 import { useState } from "react";
 import { useSearchParams } from "./use-search-params";
 
-export const useSendRequest = () => {
+export const useSendInvite = () => {
     const [isPending, setIsPending] = useState(false);
-    const sendRequest = useMutation(api.methods.requests.userSendRequest);
+    const sendInvite = useMutation(api.methods.requests.adminSendInvite);
 
     const mutate = async (
-        args: FunctionArgs<typeof api.methods.requests.userSendRequest>
+        args: FunctionArgs<typeof api.methods.requests.adminSendInvite>
     ) => {
         setIsPending(true);
         try {
-            await sendRequest(args);
+            await sendInvite(args);
         } catch {
-            console.error("Failed to send request");
+            console.error("Failed to send invite");
         } finally {
             setIsPending(false);
         }
@@ -25,34 +25,39 @@ export const useSendRequest = () => {
     return { mutate, isPending };
 };
 
-export const useListRequests = (active = true) => {
+export const useAdminListRequests = ({
+    orgId,
+}: Pick<
+    FunctionArgs<typeof api.methods.requests.adminListRequests>,
+    "orgId"
+>) => {
     const { search } = useSearchParams();
     const { results, status, loadMore } = usePaginatedQuery(
-        api.methods.requests.userListRequests,
-        active ? { search: search?.trim() } : "skip",
+        api.methods.requests.adminListRequests,
+        { orgId, search: search?.trim() },
         { initialNumItems: PAGINATION.INVITES_PAGE_SIZE }
     );
 
     return {
-        invites: results,
+        requests: results,
         isLoading: status === "LoadingFirstPage",
         isDone: status === "Exhausted",
         loadMore: () => loadMore(PAGINATION.INVITES_PAGE_SIZE),
     };
 };
 
-export const useCancelRequest = () => {
+export const useCancelInvite = () => {
     const [isPending, setIsPending] = useState(false);
-    const cancelRequest = useMutation(api.methods.requests.userCancelRequest);
+    const cancelInvite = useMutation(api.methods.requests.adminCancelInvite);
 
     const mutate = async (
-        args: FunctionArgs<typeof api.methods.requests.userCancelRequest>
+        args: FunctionArgs<typeof api.methods.requests.adminCancelInvite>
     ) => {
         setIsPending(true);
         try {
-            await cancelRequest(args);
+            await cancelInvite(args);
         } catch {
-            console.error("Failed to cancel request");
+            console.error("Failed to cancel invite");
         } finally {
             setIsPending(false);
         }
@@ -61,18 +66,18 @@ export const useCancelRequest = () => {
     return { mutate, isPending };
 };
 
-export const useReviewInvite = () => {
+export const useReviewRequest = () => {
     const [isPending, setIsPending] = useState(false);
-    const reviewInvite = useMutation(api.methods.requests.userReviewInvite);
+    const reviewRequest = useMutation(api.methods.requests.adminReviewRequest);
 
     const mutate = async (
-        args: FunctionArgs<typeof api.methods.requests.userReviewInvite>
+        args: FunctionArgs<typeof api.methods.requests.adminReviewRequest>
     ) => {
         setIsPending(true);
         try {
-            await reviewInvite(args);
+            await reviewRequest(args);
         } catch {
-            console.error("Failed to respond to invite");
+            console.error("Failed to review request");
         } finally {
             setIsPending(false);
         }

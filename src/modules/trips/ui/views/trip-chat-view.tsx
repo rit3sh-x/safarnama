@@ -10,6 +10,7 @@ import {
 } from "react-native-gifted-chat";
 import { Icon } from "@/components/ui/icon";
 import { SendHorizontal } from "lucide-react-native";
+import { useThemeColors } from "@/lib/theme";
 import { useMessages, useSendMessage } from "../../hooks";
 import { useAuthentication } from "@/modules/auth/context/auth-context";
 import type { TripId, Message } from "../../types";
@@ -32,6 +33,7 @@ function convexMessageToGifted(msg: Message, currentUserId: string): IMessage {
 }
 
 export function TripChatView({ tripId }: TripChatViewProps) {
+    const colors = useThemeColors();
     const { user } = useAuthentication();
     const { messages, isLoading, canLoadMore, loadMore } = useMessages(tripId);
     const sendMessage = useSendMessage(tripId);
@@ -57,7 +59,7 @@ export function TripChatView({ tripId }: TripChatViewProps) {
                 {...props}
                 wrapperStyle={{
                     right: {
-                        backgroundColor: "hsl(0, 0%, 9%)",
+                        backgroundColor: colors.primary,
                         borderRadius: 18,
                         borderBottomRightRadius: 4,
                         paddingVertical: 2,
@@ -65,7 +67,7 @@ export function TripChatView({ tripId }: TripChatViewProps) {
                         marginVertical: 2,
                     },
                     left: {
-                        backgroundColor: "hsl(0, 0%, 93%)",
+                        backgroundColor: colors.secondary,
                         borderRadius: 18,
                         borderBottomLeftRadius: 4,
                         paddingVertical: 2,
@@ -75,27 +77,27 @@ export function TripChatView({ tripId }: TripChatViewProps) {
                 }}
                 textStyle={{
                     right: {
-                        color: "hsl(0, 0%, 98%)",
+                        color: colors.primaryForeground,
                         fontSize: 15,
                     },
                     left: {
-                        color: "hsl(0, 0%, 9%)",
+                        color: colors.foreground,
                         fontSize: 15,
                     },
                 }}
                 timeTextStyle={{
                     right: {
-                        color: "hsl(0, 0%, 70%)",
+                        color: colors.ring,
                         fontSize: 11,
                     },
                     left: {
-                        color: "hsl(0, 0%, 45%)",
+                        color: colors.mutedForeground,
                         fontSize: 11,
                     },
                 }}
             />
         ),
-        []
+        [colors]
     );
 
     const renderInputToolbar = useCallback(
@@ -103,15 +105,15 @@ export function TripChatView({ tripId }: TripChatViewProps) {
             <InputToolbar
                 {...props}
                 containerStyle={{
-                    backgroundColor: "hsl(0, 0%, 100%)",
+                    backgroundColor: colors.background,
                     borderTopWidth: 1,
-                    borderTopColor: "hsl(0, 0%, 89.8%)",
+                    borderTopColor: colors.border,
                     paddingHorizontal: 8,
                     paddingVertical: 4,
                 }}
             />
         ),
-        []
+        [colors]
     );
 
     const renderComposer = useCallback(
@@ -119,7 +121,7 @@ export function TripChatView({ tripId }: TripChatViewProps) {
             <Composer
                 {...props}
                 textInputStyle={{
-                    backgroundColor: "hsl(0, 0%, 96%)",
+                    backgroundColor: colors.muted,
                     borderRadius: 20,
                     paddingHorizontal: 16,
                     paddingTop: 10,
@@ -127,13 +129,13 @@ export function TripChatView({ tripId }: TripChatViewProps) {
                     marginRight: 8,
                     fontSize: 15,
                     lineHeight: 20,
-                    color: "hsl(0, 0%, 9%)",
+                    color: colors.foreground,
                 }}
-                placeholderTextColor="hsl(0, 0%, 45%)"
+                placeholderTextColor={colors.mutedForeground}
                 placeholder="Message..."
             />
         ),
-        []
+        [colors]
     );
 
     const renderSend = useCallback(
@@ -149,17 +151,17 @@ export function TripChatView({ tripId }: TripChatViewProps) {
             >
                 <View
                     className="w-10 h-10 rounded-full items-center justify-center"
-                    style={{ backgroundColor: "hsl(0, 0%, 9%)" }}
+                    style={{ backgroundColor: colors.primary }}
                 >
                     <Icon
                         as={SendHorizontal}
                         className="size-5"
-                        style={{ color: "hsl(0, 0%, 98%)" }}
+                        style={{ color: colors.primaryForeground }}
                     />
                 </View>
             </Send>
         ),
-        []
+        [colors]
     );
 
     return (

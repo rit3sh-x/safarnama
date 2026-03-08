@@ -41,12 +41,14 @@ interface TripListItemProps {
 function TripListItem({ trip, onPress }: TripListItemProps) {
     const initials = getInitials(trip.name);
     const bgColor = stringToHex(trip.name);
-    const timeLabel = formatDistanceToNow(trip.updatedAt);
+    const timeLabel = formatDistanceToNow(new Date(trip.updatedAt), {
+        addSuffix: true,
+    });
 
     return (
         <Pressable
             onPress={() => onPress(trip.id)}
-            className="flex-row items-center px-4 py-3 gap-3 active:bg-muted/50"
+            className="flex-row items-center rounded-lg overflow-hidden px-4 py-3 gap-3 active:bg-muted/50"
         >
             <View className="w-14 h-14 rounded-full overflow-hidden">
                 {trip.logo ? (

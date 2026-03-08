@@ -1,4 +1,5 @@
 import { TopBar } from "@/modules/dashboard/ui/components/top-bar";
+import { useThemeColors } from "@/lib/theme";
 import { Authenticated } from "convex/react";
 import { Href, router, Tabs, usePathname } from "expo-router";
 import {
@@ -10,7 +11,8 @@ import {
     type LucideIcon,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef } from "react";
-import { Pressable, Text, useColorScheme, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+
 import {
     Directions,
     Gesture,
@@ -60,27 +62,8 @@ const TABS: Tab[] = [
 
 const TAB_NAMES = TABS.map((t) => t.name);
 
-const THEME = {
-    light: {
-        background: "hsl(0, 0%, 100%)",
-        primary: "hsl(0, 0%, 9%)",
-        primaryForeground: "hsl(0, 0%, 98%)",
-        mutedForeground: "hsl(0, 0%, 45.1%)",
-        border: "hsl(0, 0%, 89.8%)",
-    },
-    dark: {
-        background: "hsl(0, 0%, 3.9%)",
-        primary: "hsl(0, 0%, 98%)",
-        primaryForeground: "hsl(0, 0%, 9%)",
-        mutedForeground: "hsl(0, 0%, 63.9%)",
-        border: "hsl(0, 0%, 14.9%)",
-    },
-} as const;
-
 export default function Layout() {
-    const colorScheme = useColorScheme();
-    const isDark = colorScheme === "dark";
-    const colors = isDark ? THEME.dark : THEME.light;
+    const colors = useThemeColors();
     const pathname = usePathname();
     const insets = useSafeAreaInsets();
 
@@ -148,7 +131,7 @@ export default function Layout() {
                         borderTopColor: colors.border,
                         borderTopWidth: 1,
                         paddingBottom: insets.bottom + 16,
-                        paddingHorizontal: 32,
+                        paddingHorizontal: 16,
                         paddingTop: 12,
                         gap: 4,
                     }}

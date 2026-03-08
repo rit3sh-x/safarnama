@@ -18,9 +18,8 @@
         "android": {
             "package": "com.safarnama",
             "adaptiveIcon": {
-                "backgroundColor": "#E6F4FE",
+                "backgroundColor": "#0A0A0A",
                 "foregroundImage": "src/assets/app/android-icon-foreground.png",
-                "backgroundImage": "src/assets/app/android-icon-background.png",
                 "monochromeImage": "src/assets/app/android-icon-monochrome.png"
             },
             "edgeToEdgeEnabled": true,
@@ -44,7 +43,14 @@
                     }
                 }
             ],
-            "expo-secure-store"
+            "expo-secure-store",
+            [
+                "expo-notifications",
+                {
+                    "icon": "src/assets/app/android-icon-foreground.png",
+                    "color": "#D4F265"
+                }
+            ]
         ],
         "experiments": {
             "typedRoutes": true

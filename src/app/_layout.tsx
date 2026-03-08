@@ -5,7 +5,6 @@ import {
     ThemeProvider,
 } from "@react-navigation/native";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { PortalHost } from "@rn-primitives/portal";
 import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
@@ -13,6 +12,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import type { AuthClient } from "@convex-dev/better-auth/react";
+import { SystemBars } from "react-native-edge-to-edge";
 import { Provider } from "jotai";
 import "react-native-reanimated";
 
@@ -23,8 +23,12 @@ import {
     AuthenticationProvider,
 } from "@/modules/auth/context/auth-context";
 import { OnboardingProvider } from "@/modules/onboarding/context/onboarding-context";
+import { usePushNotifications } from "@/hooks/use-notifications";
 import "./globals.css";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
+type AuthState = "onboarding" | "auth" | "username" | "home" | "unknown";
+type RouteGroup = "(auth)" | "(home)" | "(custom)" | "onboarding";
 
 const convex = new ConvexReactClient(
     process.env.EXPO_PUBLIC_CONVEX_URL as string,
@@ -40,15 +44,45 @@ function AuthGate() {
     const { isLoading, showOnboarding, showAuth, showUsername, showHome } =
         useAuthentication();
 
+    usePushNotifications(showHome);
+
     const router = useRouter();
     const segments = useSegments();
+
+    const prevAuthStateRef = useRef<AuthState | null>(null);
+
     useEffect(() => {
         if (isLoading) return;
 
-        const inAuthGroup = segments[0] === "(auth)";
-        const inHomeGroup = segments[0] === "(home)";
-        const inCustomGroup = segments[0] === "(custom)";
-        const inOnboarding = segments[0] === "onboarding";
+        const authState: AuthState = showOnboarding
+            ? "onboarding"
+            : showAuth
+              ? "auth"
+              : showUsername
+                ? "username"
+                : showHome
+                  ? "home"
+                  : "unknown";
+
+        const currentGroup = segments[0] as RouteGroup | undefined;
+        const inAuthGroup = currentGroup === "(auth)";
+        const inHomeGroup = currentGroup === "(home)";
+        const inCustomGroup = currentGroup === "(custom)";
+        const inOnboarding = currentGroup === "onboarding";
+
+        const isInCorrectGroup =
+            (authState === "onboarding" && inOnboarding) ||
+            (authState === "auth" && inAuthGroup) ||
+            (authState === "username" &&
+                inAuthGroup &&
+                segments.join("/").includes("create-username")) ||
+            (authState === "home" && (inHomeGroup || inCustomGroup));
+
+        if (isInCorrectGroup && prevAuthStateRef.current === authState) {
+            return;
+        }
+
+        prevAuthStateRef.current = authState;
 
         if (showOnboarding && !inOnboarding) {
             router.replace("/onboarding");
@@ -92,11 +126,7 @@ function AuthGate() {
                     <Stack.Screen name="(custom)" />
                 </Stack>
                 <NetworkModal />
-                <StatusBar
-                    style="auto"
-                    translucent
-                    backgroundColor="transparent"
-                />
+                <SystemBars hidden style="auto" />
                 <PortalHost />
             </View>
         </ThemeProvider>

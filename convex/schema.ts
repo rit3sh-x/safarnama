@@ -34,7 +34,15 @@ export default defineSchema({
         published: v.boolean(),
         publishedAt: v.optional(v.number()),
         updatedAt: v.number(),
-    }).index("tripId", ["tripId"]),
+        tripTitle: v.string(),
+        tripDestination: v.string(),
+        isPublic: v.boolean(),
+    })
+        .index("tripId", ["tripId"])
+        .searchIndex("search", {
+            searchField: "title",
+            filterFields: ["published", "isPublic"],
+        }),
 
     blogComment: defineTable({
         tripId: v.id("trip"),
@@ -58,10 +66,20 @@ export default defineSchema({
             v.literal("accepted"),
             v.literal("rejected")
         ),
+        tripTitle: v.string(),
+        userName: v.string(),
     })
         .index("tripId", ["tripId"])
         .index("tripId_status", ["tripId", "status"])
-        .index("userId_tripId", ["userId", "tripId"]),
+        .index("userId_tripId", ["userId", "tripId"])
+        .searchIndex("search_by_trip", {
+            searchField: "tripTitle",
+            filterFields: ["userId", "status"],
+        })
+        .searchIndex("search_by_user", {
+            searchField: "userName",
+            filterFields: ["tripId", "status", "type"],
+        }),
 
     message: defineTable({
         tripId: v.id("trip"),

@@ -1,7 +1,6 @@
 import { components } from "@backend/api";
 import { ConvexError, v } from "convex/values";
 import { nanoid } from "nanoid";
-import { TableNames } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
 import { requireTripAdmin, requireUserAccess } from "../lib/utils";
 import { LIMITS } from "../lib/constants";
@@ -96,12 +95,12 @@ export const list = query({
     handler: async (ctx, { search, paginationOpts }) => {
         const user = await requireUserAccess(ctx);
 
-        const memberships = await ctx.runQuery(
+        const memberships: Doc<"member">[] = await ctx.runQuery(
             components.betterAuth.methods.orgs.listUserMemberships,
             { userId: user._id }
         );
 
-        const orgIds = memberships.page.map((m: any) => m.organizationId);
+        const orgIds = memberships.map((m) => m.organizationId);
 
         const orgs: PaginationResult<Doc<"organization">> = await ctx.runQuery(
             components.betterAuth.adapter.findMany,
@@ -129,7 +128,7 @@ export const list = query({
         );
 
         return {
-            ...memberships,
+            ...orgs,
             page: orgs.page.map((o) => ({
                 name: o.name,
                 id: o._id,
@@ -169,9 +168,21 @@ export const listPublic = query({
             { orgIds }
         );
 
+        const orgMap = new Map(orgs.map((o) => [o.id, o]));
+
         return {
             ...trips,
-            page: orgs,
+            page: trips.page.map((t) => {
+                const org = orgMap.get(t.orgId);
+                return {
+                    tripId: t._id,
+                    name: org?.name ?? t.title,
+                    logo: org?.logo,
+                    updatedAt: t.updatedAt,
+                    destination: t.destination,
+                    description: t.description,
+                };
+            }),
         };
     },
 });
@@ -214,26 +225,32 @@ export const remove = mutation({
     handler: async (ctx, { tripId }) => {
         const { trip } = await requireTripAdmin(ctx, tripId);
 
-        const indexedTables: { name: TableNames; index: string }[] = [
-            { name: "message", index: "tripId" },
-            { name: "expense", index: "tripId" },
-            { name: "expenseSplit", index: "tripId" },
-            { name: "settlement", index: "tripId" },
-            { name: "joinRequest", index: "tripId" },
-            { name: "blog", index: "tripId" },
-            { name: "blogComment", index: "tripId" },
-        ];
-
-        for (const table of indexedTables) {
+        const deleteByTripIndex = async (
+            table:
+                | "message"
+                | "expense"
+                | "expenseSplit"
+                | "settlement"
+                | "joinRequest"
+                | "blog"
+                | "blogComment"
+        ) => {
             const docs = await ctx.db
-                .query(table.name)
-                .withIndex(table.index as any, (q) =>
-                    q.eq("tripId", tripId as any)
-                )
+                .query(table)
+                .withIndex("tripId", (q) => q.eq("tripId", tripId))
                 .collect();
-
             await Promise.all(docs.map((doc) => ctx.db.delete(doc._id)));
-        }
+        };
+
+        await Promise.all([
+            deleteByTripIndex("message"),
+            deleteByTripIndex("expense"),
+            deleteByTripIndex("expenseSplit"),
+            deleteByTripIndex("settlement"),
+            deleteByTripIndex("joinRequest"),
+            deleteByTripIndex("blog"),
+            deleteByTripIndex("blogComment"),
+        ]);
 
         const tripMembers = await ctx.db
             .query("tripMember")

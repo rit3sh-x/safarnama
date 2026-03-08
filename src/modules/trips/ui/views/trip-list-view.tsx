@@ -4,39 +4,20 @@ import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
-import { useTrips } from "../../hooks/use-trips";
-import type { Trip } from "../../types";
 import { CreateTripDialog } from "../components/create-trip-dialog";
 import { NavOptions } from "../components/nav-options";
-import { TripListItem } from "../components/navigations/trips-list";
 import { SearchBar } from "../components/search-bar";
+import { Navigations } from "../components/navigations";
 
-export function TripListView() {
-    const { trips } = useTrips();
+export function TripsView() {
     const [showCreate, setShowCreate] = useState(false);
     const router = useRouter();
 
-    const sortedTrips = [...trips].sort((a, b) => b.updatedAt - a.updatedAt);
-
-    const handleTripPress = useCallback(
-        (trip: Trip) => {
-            router.push(`/(custom)/trips/${trip._id}/chat` as any);
-        },
-        [router]
-    );
-
     const handleTripCreated = useCallback(
         (tripId: string) => {
-            router.push(`/(custom)/trips/${tripId}/chat` as any);
+            router.push(`/(custom)/trips/${tripId}/chat`);
         },
         [router]
-    );
-
-    const renderItem = useCallback(
-        ({ item }: { item: Trip }) => (
-            <TripListItem trip={item} onPress={() => handleTripPress(item)} />
-        ),
-        [handleTripPress]
     );
 
     return (
@@ -44,21 +25,9 @@ export function TripListView() {
             <SearchBar />
             <NavOptions />
 
-            {/* {sortedTrips.length === 0 ? (
-                <EmptyTrips />
-            ) : (
-                <FlatList
-                    data={sortedTrips}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item._id}
-                    ItemSeparatorComponent={() => (
-                        <View className="pl-20 pr-4">
-                            <Separator />
-                        </View>
-                    )}
-                    contentContainerStyle={{ flexGrow: 1 }}
-                />
-            )} */}
+            <View className="flex-1">
+                <Navigations />
+            </View>
 
             <Button
                 onPress={() => setShowCreate(true)}

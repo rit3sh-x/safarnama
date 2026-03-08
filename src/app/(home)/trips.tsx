@@ -1,7 +1,7 @@
-import { TripListView } from "@/modules/trips/ui/views/trip-list-view";
+import { TripsView } from "@/modules/trips/ui/views/trip-list-view";
 
 const Page = () => {
-    return <TripListView />;
+    return <TripsView />;
 };
 
 export default Page;

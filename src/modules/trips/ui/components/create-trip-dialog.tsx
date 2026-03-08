@@ -1,3 +1,4 @@
+import { Portal } from "@rn-primitives/portal";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -9,7 +10,6 @@ import {
     View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Portal } from "@rn-primitives/portal";
 import Animated, {
     Easing,
     FadeIn,
@@ -57,7 +57,7 @@ export function CreateTripDialog({
     onOpenChange,
     onCreated,
 }: CreateTripDialogProps) {
-    const createTrip = useCreateTrip();
+    const { mutate: createTrip, isPending: isCreating } = useCreateTrip();
     const uploadFile = useUploadFileToConvex();
 
     const rawColors = useCSSVariable([
@@ -519,7 +519,9 @@ export function CreateTripDialog({
                             <Button
                                 className="flex-1"
                                 onPress={handleSubmit(onSubmit)}
-                                disabled={isSubmitting || coverUploading}
+                                disabled={
+                                    isSubmitting || coverUploading || isCreating
+                                }
                             >
                                 <Text>
                                     {coverUploading

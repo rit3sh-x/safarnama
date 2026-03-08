@@ -1,13 +1,23 @@
 import { useAtom } from "jotai";
 import { useCallback } from "react";
-import { searchAtom } from "../atoms";
+import { searchMapAtom, navOptionsAtom } from "../atoms";
 
 export const useSearchParams = () => {
-    const [search, setSearch] = useAtom(searchAtom);
+    const [searchMap, setSearchMap] = useAtom(searchMapAtom);
+    const [tab] = useAtom(navOptionsAtom);
+
+    const search = searchMap[tab];
+
+    const setSearch = useCallback(
+        (value: string | undefined) => {
+            setSearchMap((prev) => ({ ...prev, [tab]: value }));
+        },
+        [setSearchMap, tab]
+    );
 
     const resetSearch = useCallback(() => {
-        setSearch(undefined);
-    }, [setSearch]);
+        setSearchMap((prev) => ({ ...prev, [tab]: undefined }));
+    }, [setSearchMap, tab]);
 
     return {
         search,

@@ -13,64 +13,34 @@ export const browse = query({
         paginationOpts: paginationOptsValidator,
     },
     handler: async (ctx, { search, paginationOpts }) => {
-        const searchTerm = search?.trim().toLowerCase();
-        const pageSize = paginationOpts.numItems;
+        const searchTerm = search?.trim();
 
-        const baseQuery = () =>
-            ctx.db
+        if (searchTerm) {
+            const results = await ctx.db
                 .query("blog")
-                .filter((q) => q.eq(q.field("published"), true))
-                .order("desc");
+                .withSearchIndex("search", (qb) =>
+                    qb
+                        .search("title", searchTerm)
+                        .eq("published", true)
+                        .eq("isPublic", true)
+                )
+                .take(paginationOpts.numItems);
 
-        if (!searchTerm) {
-            const results = await baseQuery().paginate(paginationOpts);
-            const enriched = await Promise.all(
-                results.page.map(async (blog) => {
-                    const trip = await ctx.db.get(blog.tripId);
-                    return { ...blog, trip };
-                })
-            );
-            const publicOnly = enriched.filter((b) => b.trip?.isPublic);
-            return { ...results, page: publicOnly };
+            return { page: results, isDone: true, continueCursor: "" };
         }
 
-        const collected: any[] = [];
-        let cursor = paginationOpts.cursor;
-        let isDone = false;
+        const results = await ctx.db
+            .query("blog")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("published"), true),
+                    q.eq(q.field("isPublic"), true)
+                )
+            )
+            .order("desc")
+            .paginate(paginationOpts);
 
-        while (collected.length < pageSize && !isDone) {
-            const batch = await baseQuery().paginate({
-                numItems: pageSize,
-                cursor,
-            });
-
-            const enriched = await Promise.all(
-                batch.page.map(async (blog) => {
-                    const trip = await ctx.db.get(blog.tripId);
-                    return { ...blog, trip };
-                })
-            );
-
-            for (const b of enriched) {
-                if (collected.length >= pageSize) break;
-                if (!b.trip?.isPublic) continue;
-                const title = b.title.toLowerCase();
-                const tripTitle = b.trip?.title?.toLowerCase() ?? "";
-                const dest = b.trip?.destination?.toLowerCase() ?? "";
-                if (
-                    title.includes(searchTerm) ||
-                    tripTitle.includes(searchTerm) ||
-                    dest.includes(searchTerm)
-                ) {
-                    collected.push(b);
-                }
-            }
-
-            cursor = batch.continueCursor;
-            isDone = batch.isDone;
-        }
-
-        return { page: collected, isDone, continueCursor: cursor };
+        return results;
     },
 });
 
@@ -101,15 +71,23 @@ export const upsert = mutation({
     handler: async (ctx, { tripId, ...fields }) => {
         await requireTripAdmin(ctx, tripId);
         const now = Date.now();
+        const trip = await getTripFromTripId(ctx, tripId);
 
         const existing = await ctx.db
             .query("blog")
             .withIndex("tripId", (q) => q.eq("tripId", tripId))
             .unique();
 
+        const denormalized = {
+            tripTitle: trip.title,
+            tripDestination: trip.destination,
+            isPublic: trip.isPublic,
+        };
+
         if (existing) {
             await ctx.db.patch(existing._id, {
                 ...fields,
+                ...denormalized,
                 publishedAt:
                     fields.published && !existing.published
                         ? now
@@ -120,6 +98,7 @@ export const upsert = mutation({
             await ctx.db.insert("blog", {
                 tripId,
                 ...fields,
+                ...denormalized,
                 publishedAt: fields.published ? now : undefined,
                 updatedAt: now,
             });

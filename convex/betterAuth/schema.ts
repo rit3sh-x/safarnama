@@ -77,7 +77,9 @@ export const tables = {
         logo: v.optional(v.union(v.null(), v.string())),
         createdAt: v.number(),
         updatedAt: v.number(),
-        metadata: v.any(),
+        metadata: v.optional(
+            v.union(v.null(), v.record(v.string(), v.string()))
+        ),
     })
         .index("name", ["name"])
         .index("updatedAt", ["updatedAt"])
