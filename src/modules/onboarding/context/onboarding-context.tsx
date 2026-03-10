@@ -30,8 +30,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const completeOnboarding = useCallback(async () => {
-        await AsyncStorage.setItem(USER_ONBOARDING_KEY, "true");
         setIsCompleted(true);
+        await AsyncStorage.setItem(USER_ONBOARDING_KEY, "true");
     }, []);
 
     const resetOnboarding = useCallback(async () => {

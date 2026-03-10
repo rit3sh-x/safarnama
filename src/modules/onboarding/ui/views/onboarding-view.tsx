@@ -20,7 +20,7 @@ export function OnboardingView() {
         transitioning.current = true;
 
         if (isLast) {
-            await completeOnboarding();
+            completeOnboarding();
             return;
         }
 

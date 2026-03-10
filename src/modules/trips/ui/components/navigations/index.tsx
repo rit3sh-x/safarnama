@@ -10,14 +10,26 @@ import { PublicTripsList } from "./public-trips-list";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import type { InviteItem, ReviewType } from "../../../types";
+import { Id } from "@backend/dataModel";
 
 function TripsTab() {
     const { trips, isLoading, isDone, loadMore } = useTrips();
     const router = useRouter();
 
     const handlePress = useCallback(
-        (id: string) => {
-            router.push(`/(custom)/trips/${id}/chat`);
+        ({
+            tripId,
+            name,
+            logo,
+        }: {
+            tripId: Id<"trip">;
+            name: string;
+            logo?: string;
+        }) => {
+            router.push({
+                pathname: `/(custom)/trips/[tripId]/chat`,
+                params: { tripId, name, logo },
+            });
         },
         [router]
     );

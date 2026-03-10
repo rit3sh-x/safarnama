@@ -2,10 +2,14 @@ import { components } from "@backend/api";
 import { ConvexError, v } from "convex/values";
 import { nanoid } from "nanoid";
 import { mutation, query } from "../_generated/server";
-import { requireTripAdmin, requireUserAccess } from "../lib/utils";
+import {
+    requireTripAdmin,
+    requireTripMember,
+    requireUserAccess,
+} from "../lib/utils";
 import { LIMITS } from "../lib/constants";
 import { paginationOptsValidator, PaginationResult } from "convex/server";
-import { Doc } from "../betterAuth/_generated/dataModel";
+import { Doc, Id } from "../betterAuth/_generated/dataModel";
 import { Org } from "../betterAuth/methods/types";
 
 export const create = mutation({
@@ -87,6 +91,50 @@ export const create = mutation({
     },
 });
 
+export const get = query({
+    args: { tripId: v.id("trip") },
+    handler: async (ctx, { tripId }) => {
+        const { trip, member } = await requireTripMember(ctx, tripId);
+
+        const org: Doc<"organization"> | null = await ctx.runQuery(
+            components.betterAuth.adapter.findOne,
+            {
+                model: "organization",
+                where: [{ field: "_id", value: trip.orgId, operator: "eq" }],
+            }
+        );
+
+        const orgMembers: PaginationResult<Doc<"member">> = await ctx.runQuery(
+            components.betterAuth.adapter.findMany,
+            {
+                model: "member",
+                where: [
+                    {
+                        field: "organizationId",
+                        value: trip.orgId,
+                        operator: "eq" as const,
+                    },
+                ],
+                paginationOpts: { numItems: 200, cursor: null },
+            }
+        );
+
+        return {
+            tripId: trip._id,
+            orgId: trip.orgId,
+            title: trip.title,
+            destination: trip.destination,
+            description: trip.description,
+            logo: org?.logo ?? null,
+            memberCount: orgMembers.page.length,
+            role: member.role,
+            isPublic: trip.isPublic,
+            startDate: trip.startDate,
+            endDate: trip.endDate,
+        };
+    },
+});
+
 export const list = query({
     args: {
         search: v.optional(v.string()),
@@ -127,13 +175,97 @@ export const list = query({
             }
         );
 
+        const tripData = await Promise.all(
+            orgs.page.map(async (o) => {
+                const trip = await ctx.db
+                    .query("trip")
+                    .withIndex("orgId", (q) => q.eq("orgId", o._id))
+                    .unique();
+
+                if (!trip) return null;
+
+                const [lastMsg, cursor] = await Promise.all([
+                    ctx.db
+                        .query("message")
+                        .withIndex("tripId", (q) => q.eq("tripId", trip._id))
+                        .order("desc")
+                        .first(),
+                    ctx.db
+                        .query("messageReadCursor")
+                        .withIndex("tripId_userId", (q) =>
+                            q.eq("tripId", trip._id).eq("userId", user._id)
+                        )
+                        .unique(),
+                ]);
+
+                let unreadCount = 0;
+                if (lastMsg) {
+                    const sinceTime = cursor?.lastReadTime ?? 0;
+                    const unread = await ctx.db
+                        .query("message")
+                        .withIndex("tripId", (q) => q.eq("tripId", trip._id))
+                        .filter((q) =>
+                            q.gt(q.field("_creationTime"), sinceTime)
+                        )
+                        .take(100);
+                    unreadCount = unread.length;
+                }
+
+                return { org: o, trip, lastMsg, unreadCount };
+            })
+        );
+
+        const validData = tripData.filter(
+            (d): d is NonNullable<typeof d> => d !== null
+        );
+
+        const senderIds = [
+            ...new Set(
+                validData
+                    .filter((d) => d.lastMsg)
+                    .map((d) => d.lastMsg!.senderId)
+            ),
+        ];
+
+        let senderMap = new Map<string, string>();
+        if (senderIds.length > 0) {
+            const senders: PaginationResult<Doc<"user">> = await ctx.runQuery(
+                components.betterAuth.adapter.findMany,
+                {
+                    model: "user",
+                    where: [
+                        {
+                            field: "_id",
+                            value: senderIds,
+                            operator: "in" as const,
+                            connector: "AND" as const,
+                        },
+                    ],
+                    paginationOpts: {
+                        numItems: senderIds.length + 10,
+                        cursor: null,
+                    },
+                }
+            );
+            senderMap = new Map(senders.page.map((s) => [s._id, s.name]));
+        }
+
         return {
             ...orgs,
-            page: orgs.page.map((o) => ({
-                name: o.name,
-                id: o._id,
-                logo: o.logo,
-                updatedAt: o.updatedAt,
+            page: validData.map(({ org, trip, lastMsg, unreadCount }) => ({
+                orgId: org._id,
+                tripId: trip._id,
+                name: org.name,
+                logo: org.logo,
+                updatedAt: lastMsg ? lastMsg._creationTime : trip.updatedAt,
+                lastMessage: lastMsg?.deletedAt
+                    ? "[deleted]"
+                    : (lastMsg?.content ?? null),
+                lastMessageSender: lastMsg
+                    ? (senderMap.get(lastMsg.senderId) ?? null)
+                    : null,
+                unreadCount,
+                destination: trip.destination,
             })),
         };
     },
@@ -173,10 +305,10 @@ export const listPublic = query({
         return {
             ...trips,
             page: trips.page.map((t) => {
-                const org = orgMap.get(t.orgId);
+                const org = orgMap.get(t.orgId as Id<"organization">);
                 return {
                     tripId: t._id,
-                    name: org?.name ?? t.title,
+                    name: t.title,
                     logo: org?.logo,
                     updatedAt: t.updatedAt,
                     destination: t.destination,
@@ -234,6 +366,7 @@ export const remove = mutation({
                 | "joinRequest"
                 | "blog"
                 | "blogComment"
+                | "messageReadCursor"
         ) => {
             const docs = await ctx.db
                 .query(table)
@@ -250,6 +383,7 @@ export const remove = mutation({
             deleteByTripIndex("joinRequest"),
             deleteByTripIndex("blog"),
             deleteByTripIndex("blogComment"),
+            deleteByTripIndex("messageReadCursor"),
         ]);
 
         const tripMembers = await ctx.db

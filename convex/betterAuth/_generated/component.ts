@@ -95,7 +95,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 data: {
                   createdAt: number;
-                  logo?: null | string;
+                  logo?: string;
                   metadata?: null | Record<string, string>;
                   name: string;
                   slug: string;
@@ -1024,7 +1024,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 model: "organization";
                 update: {
                   createdAt?: number;
-                  logo?: null | string;
+                  logo?: string;
                   metadata?: null | Record<string, string>;
                   name?: string;
                   slug?: string;
@@ -1384,7 +1384,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 model: "organization";
                 update: {
                   createdAt?: number;
-                  logo?: null | string;
+                  logo?: string;
                   metadata?: null | Record<string, string>;
                   name?: string;
                   slug?: string;

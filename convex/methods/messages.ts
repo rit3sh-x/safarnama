@@ -1,7 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { requireTripMember } from "../lib/utils";
-import { paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, PaginationResult } from "convex/server";
+import { components } from "../_generated/api";
+import { Doc } from "../betterAuth/_generated/dataModel";
 
 export const list = query({
     args: {
@@ -15,6 +17,30 @@ export const list = query({
             .withIndex("tripId", (q) => q.eq("tripId", tripId))
             .order("desc")
             .paginate(paginationOpts);
+
+        const senderIds = [...new Set(result.page.map((m) => m.senderId))];
+        let senderMap = new Map<string, Doc<"user">>();
+        if (senderIds.length > 0) {
+            const users: PaginationResult<Doc<"user">> = await ctx.runQuery(
+                components.betterAuth.adapter.findMany,
+                {
+                    model: "user",
+                    where: [
+                        {
+                            field: "_id",
+                            value: senderIds,
+                            operator: "in" as const,
+                            connector: "AND" as const,
+                        },
+                    ],
+                    paginationOpts: {
+                        numItems: senderIds.length + 10,
+                        cursor: null,
+                    },
+                }
+            );
+            senderMap = new Map(users.page.map((u) => [u._id, u]));
+        }
 
         const page = await Promise.all(
             result.page.map(async (msg) => {
@@ -39,9 +65,16 @@ export const list = query({
                     grouped[r.emoji].count++;
                 }
 
+                const sender = senderMap.get(msg.senderId);
+
                 return {
                     ...msg,
                     reactions: Object.values(grouped),
+                    sender: {
+                        _id: msg.senderId,
+                        name: sender?.name ?? "Unknown",
+                        image: sender?.image ?? null,
+                    },
                 };
             })
         );
@@ -295,5 +328,30 @@ export const listPinned = query({
             .collect();
 
         return messages.filter((m) => m.pinnedAt && !m.deletedAt);
+    },
+});
+
+export const markRead = mutation({
+    args: { tripId: v.id("trip") },
+    handler: async (ctx, { tripId }) => {
+        const { user } = await requireTripMember(ctx, tripId);
+        const now = Date.now();
+
+        const existing = await ctx.db
+            .query("messageReadCursor")
+            .withIndex("tripId_userId", (q) =>
+                q.eq("tripId", tripId).eq("userId", user._id)
+            )
+            .unique();
+
+        if (existing) {
+            await ctx.db.patch(existing._id, { lastReadTime: now });
+        } else {
+            await ctx.db.insert("messageReadCursor", {
+                tripId,
+                userId: user._id,
+                lastReadTime: now,
+            });
+        }
     },
 });

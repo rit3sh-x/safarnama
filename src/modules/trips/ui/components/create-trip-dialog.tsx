@@ -18,6 +18,7 @@ import Animated, {
     SlideOutDown,
 } from "react-native-reanimated";
 import { useCSSVariable } from "uniwind";
+import { Id } from "@backend/dataModel";
 
 import { Button } from "@/components/ui/button";
 import { Calendar, type DateData } from "@/components/ui/calendar";
@@ -49,7 +50,11 @@ type CreateTripForm = z.infer<typeof createTripSchema>;
 interface CreateTripDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onCreated?: (tripId: string) => void;
+    onCreated?: (data: {
+        tripId: Id<"trip">;
+        name: string;
+        logo?: string;
+    }) => void;
 }
 
 export function CreateTripDialog({
@@ -224,7 +229,11 @@ export function CreateTripDialog({
 
             resetAll();
             onOpenChange(false);
-            onCreated?.(tripId);
+            onCreated?.({
+                tripId,
+                logo: logoUrl,
+                name: data.title.trim(),
+            });
         } catch (error) {
             console.error("Failed to create trip:", error);
             setSubmitError("Something went wrong. Please try again.");

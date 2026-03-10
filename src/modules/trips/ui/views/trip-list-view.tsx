@@ -6,16 +6,28 @@ import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { CreateTripDialog } from "../components/create-trip-dialog";
 import { NavOptions } from "../components/nav-options";
-import { SearchBar } from "../components/search-bar";
 import { Navigations } from "../components/navigations";
+import { SearchBar } from "../components/search-bar";
+import { Id } from "@backend/dataModel";
 
 export function TripsView() {
     const [showCreate, setShowCreate] = useState(false);
     const router = useRouter();
 
     const handleTripCreated = useCallback(
-        (tripId: string) => {
-            router.push(`/(custom)/trips/${tripId}/chat`);
+        ({
+            tripId,
+            name,
+            logo,
+        }: {
+            tripId: Id<"trip">;
+            name: string;
+            logo?: string;
+        }) => {
+            router.push({
+                pathname: `/(custom)/trips/[tripId]/chat`,
+                params: { tripId, name, logo },
+            });
         },
         [router]
     );

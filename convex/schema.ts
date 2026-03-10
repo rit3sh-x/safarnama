@@ -149,6 +149,14 @@ export default defineSchema({
         .index("messageId", ["messageId"])
         .index("messageId_userId_emoji", ["messageId", "userId", "emoji"]),
 
+    messageReadCursor: defineTable({
+        tripId: v.id("trip"),
+        userId: v.string(),
+        lastReadTime: v.number(),
+    })
+        .index("tripId", ["tripId"])
+        .index("tripId_userId", ["tripId", "userId"]),
+
     settlement: defineTable({
         tripId: v.id("trip"),
         fromUserId: v.string(),

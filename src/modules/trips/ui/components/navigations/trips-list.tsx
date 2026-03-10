@@ -1,6 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/lib/theme";
 import { getInitials, stringToHex } from "@/lib/utils";
+import { Id } from "@backend/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { Image } from "expo-image";
 import { useCallback } from "react";
@@ -35,19 +37,36 @@ function TripListSkeletons() {
 
 interface TripListItemProps {
     trip: TripOrg;
-    onPress: (id: string) => void;
+    onPress: (data: {
+        tripId: Id<"trip">;
+        name: string;
+        logo?: string;
+    }) => void;
 }
 
 function TripListItem({ trip, onPress }: TripListItemProps) {
+    const colors = useThemeColors();
     const initials = getInitials(trip.name);
     const bgColor = stringToHex(trip.name);
     const timeLabel = formatDistanceToNow(new Date(trip.updatedAt), {
         addSuffix: true,
     });
 
+    const lastMessagePreview = trip.lastMessage
+        ? trip.lastMessageSender
+            ? `${trip.lastMessageSender}: ${trip.lastMessage}`
+            : trip.lastMessage
+        : (trip.destination ?? "No messages yet");
+
     return (
         <Pressable
-            onPress={() => onPress(trip.id)}
+            onPress={() =>
+                onPress({
+                    tripId: trip.tripId,
+                    name: trip.name,
+                    logo: trip.logo,
+                })
+            }
             className="flex-row items-center rounded-lg overflow-hidden px-4 py-3 gap-3 active:bg-muted/50"
         >
             <View className="w-14 h-14 rounded-full overflow-hidden">
@@ -77,9 +96,57 @@ function TripListItem({ trip, onPress }: TripListItemProps) {
                     >
                         {trip.name}
                     </Text>
-                    <Text className="text-xs text-muted-foreground shrink-0">
+                    <Text
+                        className="text-xs shrink-0"
+                        style={{
+                            color:
+                                trip.unreadCount > 0
+                                    ? colors.primary
+                                    : colors.mutedForeground,
+                            fontWeight: trip.unreadCount > 0 ? "600" : "normal",
+                        }}
+                    >
                         {timeLabel}
                     </Text>
+                </View>
+
+                <View className="flex-row items-center justify-between gap-2">
+                    <Text
+                        className="text-sm flex-1"
+                        numberOfLines={1}
+                        style={{
+                            color:
+                                trip.unreadCount > 0
+                                    ? colors.foreground
+                                    : colors.mutedForeground,
+                        }}
+                    >
+                        {lastMessagePreview}
+                    </Text>
+
+                    {trip.unreadCount > 0 ? (
+                        <View
+                            className="rounded-full items-center justify-center shrink-0"
+                            style={{
+                                backgroundColor: colors.primary,
+                                minWidth: 22,
+                                height: 22,
+                                paddingHorizontal: 6,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: colors.primaryForeground,
+                                    fontSize: 12,
+                                    fontWeight: "700",
+                                }}
+                            >
+                                {trip.unreadCount >= 100
+                                    ? "99+"
+                                    : trip.unreadCount}
+                            </Text>
+                        </View>
+                    ) : null}
                 </View>
             </View>
         </Pressable>
@@ -95,7 +162,11 @@ interface TripsListProps {
     isLoading: boolean;
     isDone: boolean;
     loadMore: () => void;
-    onPress: (id: string) => void;
+    onPress: (data: {
+        tripId: Id<"trip">;
+        name: string;
+        logo?: string;
+    }) => void;
 }
 
 export function TripsList({
@@ -112,7 +183,7 @@ export function TripsList({
         [onPress]
     );
 
-    const keyExtractor = useCallback((item: TripOrg) => item.id, []);
+    const keyExtractor = useCallback((item: TripOrg) => item.orgId, []);
 
     const onEndReached = useCallback(() => {
         if (!isDone && !isLoading) loadMore();
